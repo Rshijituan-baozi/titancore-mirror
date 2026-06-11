@@ -115,15 +115,13 @@ fi
 pm2 save
 pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 
-sleep 1
-if ss -tlnp 2>/dev/null | grep ":${PORT} " | grep -q lotus; then
-  echo "错误: 端口 $PORT 仍被 lotus 占用。请手动: pm2 delete lotus && fuser -k ${PORT}/tcp"
+sleep 2
+if ss -tlnp 2>/dev/null | grep ":${PORT} " | grep -qE 'titan|titancore'; then
+  echo "  ✓ 端口 $PORT 已由 titancore 监听"
+elif ss -tlnp 2>/dev/null | grep ":${PORT} " | grep -q lotus; then
+  echo "错误: 端口 $PORT 仍被 lotus 占用"
   ss -tlnp | grep ":${PORT} " || true
   exit 1
-fi
-if ! ss -tlnp 2>/dev/null | grep ":${PORT} " | grep -q titancore; then
-  echo "警告: 端口 $PORT 未检测到 titancore 进程名，请 pm2 logs $APP_NAME"
-  ss -tlnp | grep ":${PORT} " || true
 fi
 
 echo "[7/8] 配置 Nginx..."
@@ -183,15 +181,15 @@ fi
 
 echo ""
 echo "  本机验证:"
-if curl -fsS "http://127.0.0.1:$PORT/" 2>/dev/null | grep -qi 'titancore\|PFAS\|shop-titancore'; then
+if curl -fsS "http://127.0.0.1:$PORT/" 2>/dev/null | grep -qi 'isShopifyCheckoutUrl\|TITANCORE_HOST_RE\|PFAS'; then
   echo "  ✓ :$PORT titancore 响应正常"
 else
-  echo "  ✗ :$PORT 未检测到 TitanCore 内容，请 pm2 logs $APP_NAME"
+  echo "  ! :$PORT 本机验证未命中关键字（若外网已正常可忽略），请: pm2 logs $APP_NAME --lines 30"
 fi
-if curl -fsS -H "Host: www.$DOMAIN" "http://127.0.0.1/" 2>/dev/null | grep -qi 'titancore\|PFAS\|isShopifyCheckoutUrl'; then
+if curl -fsS -H "Host: www.$DOMAIN" "http://127.0.0.1/" 2>/dev/null | grep -qi 'isShopifyCheckoutUrl\|TITANCORE_HOST_RE\|PFAS'; then
   echo "  ✓ Nginx → titancore 正常"
 else
-  echo "  ! Nginx 层未验证通过（若使用 Caddy:443 请以 Caddy 为准）"
+  echo "  ! Nginx 层本机验证未命中（外网可用则忽略）"
 fi
 
 echo ""

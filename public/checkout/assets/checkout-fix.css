@@ -1,0 +1,29 @@
+/* Hide mobile order summary bar if any scrape residue remains */
+aside[data-inspector-id="orderSummary"] {
+  display: none !important;
+}
+
+/* Ensure desktop sidebar stays visible on wide screens */
+@media (min-width: 1000px) {
+  aside:last-of-type {
+    display: block !important;
+  }
+}
+
+#pay-btn {
+  width: 100%;
+  padding: 16px;
+  margin-top: 16px;
+  background: #005bd1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#subtotal-price,
+#total-price {
+  font-variant-numeric: tabular-nums;
+}

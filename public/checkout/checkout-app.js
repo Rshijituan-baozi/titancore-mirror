@@ -9,8 +9,10 @@ function renderSummary(order){
   var cur=order.currency||'MYR';
   var html='';
   items.forEach(function(it){
-    var img=it.image?'<img src="'+it.image+'" alt="">':'<div style="width:64px;height:64px;background:#f5f5f5;border-radius:8px"></div>';
-    html+='<div class="tc-summary-item">'+img+'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">'+(it.title||'Item')+'</div><div style="font-size:13px;color:rgba(0,0,0,.56)">Qty '+(it.quantity||1)+'</div></div><div style="font-size:14px;font-weight:500;white-space:nowrap">'+formatMoney((it.price||0)*(it.quantity||1),cur)+'</div></div>';
+    var imgSrc=it.image||'';
+    if(imgSrc&&imgSrc.indexOf('//')===0) imgSrc=location.protocol+imgSrc;
+    var img=imgSrc?'<img src="'+imgSrc.replace(/"/g,'&quot;')+'" alt="" loading="lazy">':'<div style="width:64px;height:64px;background:#f5f5f5;border-radius:8px;flex-shrink:0"></div>';
+    html+='<div class="tc-summary-item">'+img+'<div style="flex:1;min-width:0"><div class="tc-title">'+(it.title||'Item')+'</div><div class="tc-qty">Qty '+(it.quantity||1)+'</div></div><div class="tc-price">'+formatMoney((it.price||0)*(it.quantity||1),cur)+'</div></div>';
   });
   if(!html) html='<div class="tc-summary-item"><div style="flex:1">Your cart</div><div>—</div></div>';
   var el=document.getElementById('summary-items');
@@ -18,10 +20,14 @@ function renderSummary(order){
   var amt=order.amount||0;
   var sub=document.getElementById('subtotal-price');
   var tot=document.getElementById('total-price');
-  if(sub) sub.textContent=formatMoney(amt,cur);
-  if(tot) tot.textContent=formatMoney(amt,cur);
+  var priceText=formatMoney(amt,cur);
+  if(sub) sub.textContent=priceText;
+  if(tot) tot.textContent=priceText;
+  document.querySelectorAll('[data-tc-shipping]').forEach(function(node){
+    node.textContent='Free';
+  });
   document.querySelectorAll('[data-tc-total]').forEach(function(node){
-    node.textContent=formatMoney(amt,cur);
+    node.textContent=priceText;
   });
 }
 fetch('/cart.js',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(cart){

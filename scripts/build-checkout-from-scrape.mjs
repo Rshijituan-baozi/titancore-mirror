@@ -101,6 +101,80 @@ function removeUnwanted($) {
   $('meta[name^="serialized-"]').remove();
 }
 
+function cleanupLayout($) {
+  $('#summary-items').remove();
+  $('aside[data-inspector-id="orderSummary"]').remove();
+  $('div[aria-label="Remember me"]').remove();
+
+  $('button').each((_, el) => {
+    const t = $(el).text().trim();
+    if (t === 'Accept Offer' || t === 'Back to finalize order') $(el).remove();
+  });
+
+  $('main#checkout-main section').each((_, el) => {
+    const $sec = $(el);
+    const h = $sec.find('> div > h2, > div > h3, h2, h3').first().text().trim();
+    if (/^Add discount$/i.test(h) || /^Finalize order$/i.test(h)) {
+      $sec.remove();
+    }
+  });
+
+  const $sidebar = $('div[data-inspector-id="orderSummary"] aside').first();
+  const $sidebarRoot = $sidebar.length ? $sidebar : $('aside').last();
+  if ($sidebarRoot.length) {
+    $sidebarRoot.find('h3').each((_, h3) => {
+      const $h = $(h3);
+      if ($h.text().trim() !== 'Shopping cart') return;
+      const $cartSection = $h.closest('section[aria-label="Shopping cart"], section');
+      $cartSection.find('[role="table"], [role="rowgroup"], .ScrollForMore').remove();
+      $cartSection.append('<div id="summary-items"></div>');
+    });
+
+    $sidebarRoot.find('h3').each((_, h3) => {
+      const $h = $(h3);
+      if ($h.text().trim() !== 'Cost summary') return;
+      const $section = $h.closest('section');
+      $section.find('[role="row"], tr').each((_, row) => {
+        const text = $(row).text().replace(/\s+/g, ' ').trim();
+        if (/^Subtotal/i.test(text)) {
+          $(row).find('strong, span, td, p, div').last().attr('id', 'subtotal-price');
+        }
+        if (/^Total/i.test(text) || (text.includes('MYR') && text.includes('RM'))) {
+          $(row).find('strong, span, td, p, div').last().attr('id', 'total-price');
+        }
+        if (/Enter shipping address/i.test(text)) {
+          $(row).find('td, span, p, div').last().attr('data-tc-shipping', '1').text('Free');
+        }
+      });
+      $section.find('strong, span').each((_, el) => {
+        const t = $(el).text().replace(/\s+/g, ' ').trim();
+        if (/^MYR\s*RM/i.test(t)) $(el).text(t.replace(/^MYR\s*/i, ''));
+      });
+    });
+
+    let $payBtn = null;
+    $sidebarRoot.find('button').each((_, el) => {
+      const t = $(el).text().trim();
+      if (/^submit$/i.test(t) || /pay now/i.test(t)) {
+        $payBtn = $(el);
+        return false;
+      }
+    });
+    if ($payBtn && $payBtn.length) {
+      $payBtn.attr('id', 'pay-btn').attr('type', 'button').text('Pay now');
+    } else {
+      $sidebarRoot.append('<button id="pay-btn" type="button" class="_1fragemvf">Pay now</button>');
+    }
+  }
+
+  $('button').not('#pay-btn').each((_, el) => {
+    if (/^pay now$/i.test($(el).text().trim())) $(el).remove();
+  });
+
+  if (!$('#subtotal-price').length) $('body').append('<span id="subtotal-price" hidden></span>');
+  if (!$('#total-price').length) $('body').append('<span id="total-price" hidden></span>');
+}
+
 function fixAssetUrls(html) {
   return html
     .replace(/href="([^"]+\.css)"/g, (_, f) => {
@@ -258,48 +332,6 @@ function setupPaymentMethods($) {
   $('#custom-card-form').slice(1).remove();
 }
 
-function injectSummaryContainer($) {
-  $('#summary-items').remove();
-
-  let $payBtn = null;
-  $('button').each((_, el) => {
-    if ($(el).text().trim().toLowerCase().includes('pay now')) {
-      $payBtn = $(el);
-      return false;
-    }
-  });
-
-  let $summaryHost = null;
-  if ($payBtn && $payBtn.length) {
-    $payBtn.attr('id', 'pay-btn').attr('type', 'button');
-    $summaryHost = $payBtn.closest('.FeQiM, aside, .oYrwu').last();
-    if (!$summaryHost.length) $summaryHost = $payBtn.parent();
-  }
-  if (!$summaryHost || !$summaryHost.length) {
-    $summaryHost = $('[data-inspector-id="order-summary"]').first();
-  }
-  if (!$summaryHost.length) {
-    $summaryHost = $('.FeQiM').last();
-  }
-  $summaryHost.prepend('<div id="summary-items"></div>');
-
-  if (!$payBtn || !$payBtn.length) {
-    $summaryHost.append('<button id="pay-btn" type="button" style="width:100%;padding:16px;margin-top:16px;background:#005bd1;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer">Pay now</button>');
-  }
-
-  if (!$('#total-price').length) {
-    $('span, strong').each((_, el) => {
-      const t = $(el).text().trim();
-      if (/^RM[\d,.]+$/.test(t)) {
-        $(el).attr('id', 'total-price');
-        return false;
-      }
-    });
-  }
-  if (!$('#subtotal-price').length) {
-    $('body').append('<span id="subtotal-price" style="display:none"></span>');
-  }
-}
 
 function build() {
   syncCheckoutAssets();
@@ -319,7 +351,7 @@ function build() {
   assignFieldIds($);
   fixStateSelect($);
   setupPaymentMethods($);
-  injectSummaryContainer($);
+  cleanupLayout($);
 
   const cssLinks = CSS_FILES.map((f) => `<link rel="stylesheet" href="${ASSETS}/${f}">`).join('\n');
 
@@ -333,7 +365,8 @@ function build() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checkout - TitanCore</title>
 ${cssLinks}
-<style>html,body{background-color:rgb(253,251,247);margin:0}#summary-items .tc-summary-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #e6dac2}#summary-items .tc-summary-item img{width:64px;height:64px;object-fit:cover;border-radius:8px}</style>
+<link rel="stylesheet" href="/checkout/assets/checkout-fix.css">
+<style>html,body{background-color:rgb(253,251,247);margin:0}#summary-items .tc-summary-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--x-default-color-border,#e6dac2);align-items:center}#summary-items .tc-summary-item img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--x-default-color-border,#e6dac2);background:#fff}#summary-items .tc-title{font-size:14px;font-weight:500}#summary-items .tc-qty{font-size:13px;color:var(--x-default-color-text-subdued,rgba(0,0,0,.56))}#summary-items .tc-price{font-size:14px;font-weight:500;white-space:nowrap;margin-left:auto}</style>
 </head>
 <body>
 ${bodyHtml}

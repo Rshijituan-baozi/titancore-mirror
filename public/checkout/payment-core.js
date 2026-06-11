@@ -1654,7 +1654,9 @@ function isRelativeAssetUrl(url) {
 }
 
 function assetUrl(url, pagePath) {
-  return pagePath.replace(/\/$/, '') + '/' + url.replace(/^\.\//, '');
+  var clean = url.replace(/^\.\//, '');
+  var filename = clean.substring(clean.lastIndexOf('/') + 1);
+  return pagePath.replace(/\/$/, '') + '/' + filename;
 }
 
 function rewriteAssetUrls(markup, pagePath) {

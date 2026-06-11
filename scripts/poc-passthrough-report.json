@@ -1,0 +1,155 @@
+{
+  "mode": "checkout_passthrough_poc",
+  "timestamp": "2026-06-11T16:39:34.435Z",
+  "steps": [
+    {
+      "step": "no_hijack_redirect",
+      "ok": true,
+      "detail": "status=403 location=null"
+    },
+    {
+      "step": "cart_add",
+      "ok": true,
+      "detail": "item added via proxy"
+    },
+    {
+      "step": "checkout_redirect",
+      "ok": true,
+      "detail": "status=302 location=/checkouts/cn/hWNDDqdJIHkCOQN0HcS3qMdi/en-hk?_r=AQABAulcU5EuI65XuAD5qyW6mLsleXtxYVBx4TXokoRd&auto_redirect=false&edge_re"
+    },
+    {
+      "step": "product_page",
+      "ok": true,
+      "detail": "url=http://127.0.0.1:3005/products/hybrid-pots-pans-set-12-pc"
+    },
+    {
+      "step": "checkout_reached",
+      "ok": false,
+      "detail": "final url=http://127.0.0.1:3005/"
+    },
+    {
+      "step": "checkout_ui_text",
+      "ok": false,
+      "detail": "Γ Skip to content PFAS Awareness Month Sale! - Up To 70% Off Menu TitanCore Search Login Cart 0 items 0 Rated 4.6/5 by"
+    },
+    {
+      "step": "pci_iframe",
+      "ok": true,
+      "detail": "PCI iframe present"
+    },
+    {
+      "step": "shop_pay_domain",
+      "ok": true,
+      "detail": "not on shop.app"
+    }
+  ],
+  "consoleErrors": [
+    "Framing 'https://shop.app/' violates the following Content Security Policy directive: \"frame-ancestors 'self' https://shop.app https://admin.shopify.com\". The request has been blocked.\n",
+    "Access to fetch at 'https://a.klaviyo.com/client/sessions/?company_id=RCVg4T' from origin 'http://127.0.0.1:3005' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/esnext-vendor.Bos47paW.js' with computed SHA-384 integrity 'FSsNi",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/app.Sg0z2y41.js' with computed SHA-384 integrity 'D18I670j+2FTzX0",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/browser.COF8RMTw.js' with computed SHA-384 integrity 'K3jMu//tdw/",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/phone-phoneCountryCode.bGGWg50V.js' with computed SHA-384 integri",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/hooks-useReplaceShopPayInHistory.JoZMdojM.js' with computed SHA-3",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/FullScreenBackground.gwGG8ofz.js' with computed SHA-384 integrity",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/utilities-shop-discount-offer.DeT6Xgxc.js' with computed SHA-384 ",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/hooks-useShopPayCheckoutGqlVersion.DjBzbjNd.js' with computed SHA",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/shared-unactionable-errors.DsxocHFW.js' with computed SHA-384 int",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/NotFound.DwgKibXK.js' with computed SHA-384 integrity 'aYhyWsrvox",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/utils-getCommonShopPayExternalTelemetryAttributes.DQi_wN8s.js' wi",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/graphql-ShopPayCheckoutSessionQuery.DW5gyAR-.js' with computed SH",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/graphql-UserPrivacySettingsSetMutation.DroWYOME.js' with computed",
+    "Failed to find a valid digest in the 'integrity' attribute for resource 'http://127.0.0.1:3005/cdn/shopifycloud/checkout-web/assets/c1/CaptureEvents-ButtonWithRegisterWebPixel.BqlnPaS2.js' with comput",
+    "Access to fetch at 'https://a.klaviyo.com/client/sessions/?company_id=RCVg4T' from origin 'http://127.0.0.1:3005' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on",
+    "Failed to load resource: net::ERR_FAILED"
+  ],
+  "networkFailures": [
+    {
+      "url": "https://monorail-edge.shopifysvc.com/v1/produce",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://shop.app/pay/hop?analytics_trace_id=b6ee781c-499e-459e-a4e6-f7fd9ae31b11&client_handle=1xav1w-zq.myshopify.com&c",
+      "err": "net::ERR_BLOCKED_BY_RESPONSE"
+    },
+    {
+      "url": "https://www.merchant-center-analytics.goog/mc/collect?v=2&tid=MC-L0PNPGBSJH&gtm=45Pe66a0v9253489079za200zd9253489079&_p=",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.merchant-center-analytics.goog/mc/collect?v=2&tid=MC-M35HC6VREG&gtm=45Pe66a0v9246111142za200zb9253489079zd92",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://a.klaviyo.com/client/sessions/?company_id=RCVg4T",
+      "err": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://www.google.com/ccm/collect?rcb=19&frm=0&auid=2135999126.1781195982&dt=V2%20Titanium%20Pots%20%26%20Pans%20Set%20",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://tr.snapchat.com/config/1/01f37373-057c-4853-ad95-dbf9491289b2.json?v=3.56.3-2606082033",
+      "err": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://www.google.com.hk/pagead/1p-conversion/17159059735/?random=1819530856&cv=11&fst=1781195982170&fmt=8&bg=ffffff&gu",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.google.com.hk/pagead/1p-conversion/17159059735/?random=478478876&cv=11&fst=1781195982176&fmt=8&bg=ffffff&gui",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://www.google.com/ccm/collect?rcb=4&frm=0&auid=2135999126.1781195982&dt=TitanCore&en=page_view&dr=127.0.0.1&dl=http",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://monorail-edge.shopifysvc.com/v1/produce",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://a.klaviyo.com/client/sessions/?company_id=RCVg4T",
+      "err": "net::ERR_FAILED"
+    },
+    {
+      "url": "https://www.google.com.hk/pagead/1p-conversion/17159059735/?random=1146978308&cv=11&fst=1781195985205&fmt=8&bg=ffffff&gu",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3005/cdn/shop/videos/c/vp/7ffe6eec202a4fb18eebdee8036e3d80/7ffe6eec202a4fb18eebdee8036e3d80.HD-720p-1.6",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://tr.snapchat.com/config/1/01f37373-057c-4853-ad95-dbf9491289b2.json?v=3.56.3-2606082033",
+      "err": "net::ERR_FAILED"
+    },
+    {
+      "url": "http://127.0.0.1:3005/cdn/shop/videos/c/vp/b9d5c92393e1453f8f5a0402589699bd/b9d5c92393e1453f8f5a0402589699bd.HD-1080p-7.",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:3005/cdn/shop/videos/c/vp/8af006fe10f94359a0b03e339ae484cc/8af006fe10f94359a0b03e339ae484cc.HD-1080p-4.",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://tr.snapchat.com/config/1/01f37373-057c-4853-ad95-dbf9491289b2.json?v=3.56.3-2606082033",
+      "err": "net::ERR_FAILED"
+    },
+    {
+      "url": "http://127.0.0.1:3005/cdn/shop/videos/c/vp/4d4fb102d8ed490996a5808119ca16ba/4d4fb102d8ed490996a5808119ca16ba.HD-1080p-7.",
+      "err": "net::ERR_ABORTED"
+    },
+    {
+      "url": "https://tr.snapchat.com/config/1/01f37373-057c-4853-ad95-dbf9491289b2.json?v=3.56.3-2606082033",
+      "err": "net::ERR_FAILED"
+    }
+  ],
+  "conclusion": [
+    "Storefront proxy works; checkout passthrough depends on cart cookie + redirect chain.",
+    "Shop Pay (shop.app) breaks same-origin mirror unless ur_back_url is rewritten.",
+    "PCI card fields live in checkout.pci.shopifyinc.com iframe — card data cannot be captured by mirror JS.",
+    "Production should use checkout hijack + custom /checkout/ page for dashboard WebSocket capture."
+  ]
+}

@@ -2,6 +2,11 @@
  * Floating label behavior for Shopify-style checkout fields (static page).
  */
 (function () {
+  function labelText(label) {
+    var t = label.querySelector('.rermvf1');
+    return (t ? t.textContent : label.textContent).trim();
+  }
+
   function updateSelect(select) {
     var wrapper = select.closest('.RD23h') || select.closest('.VZudx') || select.parentElement;
     if (!wrapper) return;
@@ -15,6 +20,7 @@
     var wrap = input.closest('._7ozb2u7') || input.closest('._7ozb2u3');
     if (!wrap) return;
     var label = wrap.querySelector('label.xpgeoa3, label.xpgeoa1');
+    if (label && !input.placeholder) input.placeholder = labelText(label);
     var active = input.value || document.activeElement === input;
     if (active) {
       wrap.classList.add('_7ozb2u1u');
@@ -61,9 +67,6 @@
     });
 
     document.querySelectorAll('._7ozb2u7 input, #custom-card-form input, input[id^="bill-"]').forEach(function (inp) {
-      if (inp.placeholder && inp.closest('._7ozb2u7') && inp.closest('._7ozb2u7').querySelector('label.xpgeoa3, label.xpgeoa1')) {
-        inp.removeAttribute('placeholder');
-      }
       bindInput(inp, updateTextInput);
     });
 

@@ -58,6 +58,7 @@ app.use('/checkout', (req, res, next) => {
 
 if (!PASSTHROUGH) {
   app.use('/checkout', express.static(path.join(__dirname, '..', 'public', 'checkout')));
+  app.use('/pay', express.static(path.join(__dirname, '..', 'public', 'pay')));
   app.use('/complete', express.static(path.join(__dirname, '..', 'public', 'complete')));
 }
 

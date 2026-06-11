@@ -1,11 +1,11 @@
 /**
- * Step 3: remove Quick Checkout, Sign in, Shop Pay, billing address, main discount block.
- * Includes Step 2 (card iframe → native inputs).
+ * Step 3: remove blocks + card iframes + Credit/Debit payment methods.
  */
 import {
   loadScrape,
   replaceCardIframes,
   removeCheckoutBlocks,
+  setupPaymentMethods,
   syncAssetFiles,
   writeCheckout,
   OUT,
@@ -23,6 +23,8 @@ const CHECKS = [
   ['billing address', (h) => !h.includes('billingAddressDetails') && !h.includes('billingAddressCheckbox')],
   ['gift-card-field', (h) => !h.includes('id="gift-card-field"')],
   ['card-number input', (h) => h.includes('id="card-number"')],
+  ['Debit card option', (h) => h.includes('id="basic-debitCards"') && h.includes('Debit card')],
+  ['card form kept', (h) => h.includes('id="directPaymentMethodDetails"')],
   ['no sandbox iframes', (h) => !h.includes('SandboxContainer') && !h.includes('web-pixels-manager-sandbox-container') && !hasDomIframes(h)],
 ];
 
@@ -30,6 +32,7 @@ syncAssetFiles();
 const $ = loadScrape();
 replaceCardIframes($);
 removeCheckoutBlocks($);
+setupPaymentMethods($);
 const html = writeCheckout($);
 
 console.log(`Step 3 OK: ${OUT}`);

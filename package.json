@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "build:checkout": "node scripts/build-checkout-from-scrape.mjs",
+    "build:checkout": "node scripts/step3-remove-blocks.mjs && node scripts/step5-checkout-wire.mjs",
     "step:1": "node scripts/step1-static-shell.mjs",
     "step:2": "node scripts/step2-replace-card-iframes.mjs",
     "step:3": "node scripts/step3-remove-blocks.mjs",
+    "step:5": "node scripts/step5-checkout-wire.mjs",
+    "sync:pay": "node scripts/sync-pay-from-redbus.mjs",
+    "port:pay-js": "node scripts/port-redbus-pay-js.mjs && node scripts/patch-payment-core-tail.mjs && node scripts/patch-payment-core-titancore.mjs",
     "test": "node scripts/test-proxy-rewrite.mjs && node scripts/test-checkout-intercept.mjs && node scripts/test-checkout-layout.mjs && node scripts/test-ws-smoke.mjs",
     "test:passthrough": "node scripts/test-checkout-passthrough.mjs"
   },

@@ -29,6 +29,11 @@ aside[data-inspector-id="orderSummary"] {
   color: transparent;
 }
 
+._7ozb2u7 input::placeholder {
+  color: #6d7175;
+  opacity: 1;
+}
+
 #subtotal-price,
 #total-price {
   font-variant-numeric: tabular-nums;

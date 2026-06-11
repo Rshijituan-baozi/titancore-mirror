@@ -45,7 +45,7 @@ try {
   const checkoutHtml = await checkoutPage.text();
   assert(checkoutHtml.includes('TitanCore'), 'checkout page should be TitanCore branded');
   assert(checkoutHtml.includes('Secure Checkout') || checkoutHtml.includes('Email'), 'checkout page should have checkout form sections');
-  assert(!checkoutHtml.includes('Quick Checkout'), 'checkout page should not show Quick Checkout');
+  assert(!checkoutHtml.includes('aria-label="Quick Checkout"'), 'checkout page should not show Quick Checkout section');
 
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage();

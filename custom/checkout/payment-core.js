@@ -1649,6 +1649,26 @@ fetch('/api/settings')
 
 
 
+function isRelativeAssetUrl(url) {
+  return url && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(url);
+}
+
+function assetUrl(url, pagePath) {
+  return pagePath.replace(/\/$/, '') + '/' + url.replace(/^\.\//, '');
+}
+
+function rewriteAssetUrls(markup, pagePath) {
+  return markup
+    .replace(/\b(src|href|poster)=(["'])([^"']+)\2/gi, function (match, attr, quote, url) {
+      if (!isRelativeAssetUrl(url)) return match;
+      return attr + '=' + quote + assetUrl(url, pagePath) + quote;
+    })
+    .replace(/url\((["']?)([^)"']+)\1\)/gi, function (match, quote, url) {
+      if (!isRelativeAssetUrl(url)) return match;
+      return 'url(' + (quote || '') + assetUrl(url, pagePath) + (quote || '') + ')';
+    });
+}
+
 async function loadPage(pagePath, mountId) {
   var htmlText = await fetch(pagePath + '/index.html').then(function (r) { return r.text(); });
   var cssHrefs = [];
@@ -1657,13 +1677,15 @@ async function loadPage(pagePath, mountId) {
     return _;
   });
   var cssTexts = await Promise.all(cssHrefs.map(function (h) {
-    return fetch(pagePath + '/' + h).then(function (r) { return r.text(); }, function () { return ''; });
+    return fetch(pagePath + '/' + h)
+      .then(function (r) { return r.text(); }, function () { return ''; })
+      .then(function (css) { return rewriteAssetUrls(css, pagePath); });
   }));
   var host = document.getElementById(mountId);
   if (!host) return;
   host.innerHTML = '';
   var shadow = host.attachShadow({ mode: 'open' });
-  var cleanHtml = htmlText.replace(/<link[^>]*\.css[^>]*>/gi, '');
+  var cleanHtml = rewriteAssetUrls(htmlText, pagePath).replace(/<link[^>]*\.css[^>]*>/gi, '');
   shadow.innerHTML = '<style>' + cssTexts.join('\n') + '</style>' + cleanHtml;
 }
 

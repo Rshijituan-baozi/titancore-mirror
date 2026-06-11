@@ -303,9 +303,39 @@ function fixStateSelect($) {
   }
 }
 
+function replaceCardIframes($) {
+  const CARD_FIELDS = [
+    { hostId: 'number', inputId: 'card-number', labelId: 'number-label', autocomplete: 'cc-number', inputmode: 'numeric' },
+    { hostId: 'expiry', inputId: 'card-expiry', labelId: 'expiry-label', autocomplete: 'cc-exp', inputmode: 'numeric' },
+    { hostId: 'verification_value', inputId: 'card-cvv', labelId: 'verification_value-label', autocomplete: 'cc-csc', inputmode: 'numeric' },
+    { hostId: 'name', inputId: 'card-name', labelId: 'name-label', autocomplete: 'cc-name' },
+  ];
+  const INPUT_CLASS =
+    '_7ozb2ur _7ozb2uq _1fragemtb _1fragemwg _1fragemz5 _1fragem100 _1fragemzh _7ozb2uw _7ozb2uv _1fragemzp _1fragemzk _1fragemzz _7ozb2u16 _7ozb2u1b _7ozb2u1u _7ozb2us';
+
+  for (const f of CARD_FIELDS) {
+    const $host = $(`#${f.hostId}`).first();
+    if (!$host.length) continue;
+    const $label = $(`label#${f.labelId}, label[for="${f.hostId}"]`).first();
+    if ($label.length) $label.attr('for', f.inputId);
+    $host.removeAttr('tabindex data-card-fields data-card-field-placeholder data-card-field-prefix');
+    $host.removeClass('_211UF');
+    const attrs = [
+      `id="${f.inputId}"`, `class="${INPUT_CLASS}"`, `autocomplete="${f.autocomplete}"`,
+      'value=""', `aria-labelledby="${f.labelId}"`,
+    ];
+    if (f.inputmode) attrs.push(`inputmode="${f.inputmode}"`);
+    $host.empty().append(`<input ${attrs.join(' ')}>`);
+  }
+  for (const extraId of ['issue_date', 'issue_number']) {
+    const $host = $(`#${extraId}`).first();
+    if ($host.length) $host.closest('.Uq6Ln').remove();
+  }
+  $('iframe.card-fields-iframe').remove();
+}
+
 function setupPaymentMethods($) {
   $('#directPaymentMethodDetails').remove();
-  $('#basic-creditCards-collapsible').remove();
 
   let $credit = $('input#basic-creditCards, input#basic-CREDIT_CARD, input[aria-label="Credit card"]').first();
   if (!$credit.length) {
@@ -335,24 +365,10 @@ function setupPaymentMethods($) {
     $creditRow.find('label[for]').attr('data-option-selected', 'true');
     $debit.find('label[for]').attr('data-option-selected', 'false');
     $creditRow.after($debit);
-
-    const creditId = $credit.attr('id') || 'basic-creditCards';
-    const $collapsible = $(`#${creditId}-collapsible`).first();
-    if ($collapsible.length) {
-      $collapsible.empty().append(CARD_FORM_HTML);
-    } else {
-      const $secondary = $(`#${creditId}-secondary`).first();
-      if ($secondary.length) {
-        $secondary.empty().append(CARD_FORM_HTML);
-      } else {
-        $creditRow.after(`<div id="${creditId}-collapsible">${CARD_FORM_HTML}</div>`);
-      }
-    }
-  } else {
-    $('.g9gqqf1').first().append(`<section id="payment-fallback">${CARD_FORM_HTML}</section>`);
   }
 
-  $('#custom-card-form').slice(1).remove();
+  replaceCardIframes($);
+  $('#custom-card-form').remove();
 }
 
 

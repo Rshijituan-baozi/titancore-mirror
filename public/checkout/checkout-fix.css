@@ -1,0 +1,23 @@
+/* Card fields: native inputs inside former iframe hosts */
+.DCpNs input,
+.KAqU2 input {
+  width: 100%;
+  height: 47px;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+}
+
+.DCpNs:focus-within,
+.KAqU2:focus-within {
+  outline: none;
+}
+
+iframe.card-fields-iframe {
+  display: none !important;
+}

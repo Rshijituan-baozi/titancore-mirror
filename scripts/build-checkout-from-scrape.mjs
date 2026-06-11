@@ -83,6 +83,9 @@ const OVERLAY_HTML = `
 
 function removeUnwanted($) {
   $('section[aria-label="Quick Checkout"]').remove();
+  $('#gift-card-field').remove();
+  $('#3p-gift-card-field').remove();
+  $('a[href*="customer_authentication/login"]').remove();
   $('a').each((_, el) => {
     if ($(el).text().trim() === 'Sign in') $(el).remove();
   });
@@ -91,6 +94,7 @@ function removeUnwanted($) {
   $('#billingAddressCheckbox').remove();
   $('label[for="billingAddressCheckbox"]').remove();
   $('#basic-SHOPIFY_INSTALLMENTS').closest('._1u2aa6m3').remove();
+  $('div[aria-label="Remember me"]').remove();
   $('.sBuoU button').each((_, el) => {
     if ($(el).text().trim() === 'Not now') $(el).closest('.sBuoU').remove();
   });

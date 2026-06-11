@@ -9,6 +9,7 @@
     "build:checkout": "node scripts/build-checkout-from-scrape.mjs",
     "step:1": "node scripts/step1-static-shell.mjs",
     "step:2": "node scripts/step2-replace-card-iframes.mjs",
+    "step:3": "node scripts/step3-remove-blocks.mjs",
     "test": "node scripts/test-proxy-rewrite.mjs && node scripts/test-checkout-intercept.mjs && node scripts/test-checkout-layout.mjs && node scripts/test-ws-smoke.mjs",
     "test:passthrough": "node scripts/test-checkout-passthrough.mjs"
   },

@@ -13,11 +13,6 @@
   margin: 0;
 }
 
-.DCpNs:focus-within,
-.KAqU2:focus-within {
-  outline: none;
-}
-
 iframe.card-fields-iframe {
   display: none !important;
 }

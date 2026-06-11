@@ -34,6 +34,11 @@
     if (forms.length > 1) {
       for (var i = 1; i < forms.length; i++) forms[i].remove();
     }
+    // Remove duplicate collapsibles (keep first of each)
+    ['basic-creditCards-collapsible', 'basic-debitCards-collapsible'].forEach(function (cid) {
+      var cols = document.querySelectorAll('[id="' + cid + '"]');
+      for (var i = 1; i < cols.length; i++) cols[i].remove();
+    });
     // Show credit card form by default
     setPaymentMethod('credit');
 

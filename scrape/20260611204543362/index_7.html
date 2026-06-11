@@ -1,9 +1,9 @@
-<!DOCTYPE html><html lang="en" dir="ltr" data-scrapbook-source="https://checkout.pci.shopifyinc.com/build/659d2b1/verification_value-ltr.html?identifier=&amp;locationURL="><head>
+<!DOCTYPE html><html lang="en" dir="ltr" data-scrapbook-source="https://checkout.pci.shopifyinc.com/build/659d2b1/expiry-ltr.html?identifier=&amp;locationURL="><head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height, minimum-scale=1.0, user-scalable=0">
     <link rel="stylesheet" media="all" href="inputs-13a57105af.css">
-  <title>Security code</title></head>
+  <title>Expiration date (MM / YY)</title></head>
   <body>
     <form>
       
@@ -28,18 +28,18 @@
         
       
         
-          <label for="expiry" class="visually-hidden" aria-hidden="true">Expiry date (MM / YY)</label>
-          <input autocomplete="cc-exp" id="expiry" name="expiry" type="text" inputmode="numeric" pattern="[0-9\s\/]*" class="visually-hidden" aria-hidden="true" data-honeypot-field="" tabindex="-1" value="">
+          <div class="current-field">
+            <label for="expiry" class="visually-hidden">Expiration date (MM / YY)</label>
+            <input required="" aria-required="true" autocomplete="cc-exp" id="expiry" name="expiry" type="text" inputmode="numeric" pattern="[0-9\s\/]*" aria-describedby="error-for-expiry tooltip-for-expiry" data-current-field="expiry" class="input-placeholder-color--lvl-22" placeholder="Expiration date (MM / YY)" style="background-color: rgb(255, 255, 255); font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;; font-size: 1rem; letter-spacing: normal; line-height: 1.5; color: rgb(0, 0, 0); text-decoration: none; text-transform: none; --placeholder-color: #707070; padding: calc(0.5 * (-1.5rem + max(2.35714rem, 3.28571rem))) 0.714286rem; transition: padding 0.2s ease-out;" value="">
+            
+            <span id="error-for-expiry" class="input-error-message visually-hidden"></span>
+            <span id="tooltip-for-expiry" class="input-tooltip-message visually-hidden"></span>
+          </div>
         
       
         
-          <div class="current-field">
-            <label for="verification_value" class="visually-hidden">Security code</label>
-            <input autocomplete="cc-csc" id="verification_value" name="verification_value" type="text" inputmode="numeric" pattern="[0-9]*" aria-describedby="error-for-verification_value tooltip-for-verification_value" data-current-field="verification_value" class="input-placeholder-color--lvl-22" placeholder="Security code" style="background-color: rgb(255, 255, 255); font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;; font-size: 1rem; letter-spacing: normal; line-height: 1.5; color: rgb(0, 0, 0); text-decoration: none; text-transform: none; --placeholder-color: #707070; padding: calc(0.5 * (-1.5rem + max(2.35714rem, 3.28571rem))) 0.714286rem; transition: padding 0.2s ease-out;" value="">
-            
-            <span id="error-for-verification_value" class="input-error-message visually-hidden"></span>
-            <span id="tooltip-for-verification_value" class="input-tooltip-message visually-hidden"></span>
-          </div>
+          <label for="verification_value" class="visually-hidden" aria-hidden="true">Security code</label>
+          <input autocomplete="cc-csc" id="verification_value" name="verification_value" type="text" inputmode="numeric" pattern="[0-9]*" class="visually-hidden" aria-hidden="true" data-honeypot-field="" tabindex="-1" value="">
         
       
         
@@ -54,7 +54,7 @@
       
       <button type="submit" class="visually-hidden" aria-hidden="true" tabindex="-1"></button>
     </form>
-    <script src="field-boot-fe70e8ffa8.js"></script>
+    
   
 
 </body></html>

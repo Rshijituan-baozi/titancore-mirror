@@ -10,7 +10,7 @@ import * as cheerio from 'cheerio';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
-const SCRAPE = path.join(ROOT, 'scrape', '20260611172119031', 'index.html');
+const SCRAPE = path.join(ROOT, 'scrape', '20260611204543362', 'index.html');
 const OUT = path.join(ROOT, 'public', 'checkout', 'index.html');
 
 function stripRuntime($) {

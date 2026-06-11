@@ -10,7 +10,7 @@ import * as cheerio from 'cheerio';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const SCRAPE_DIR = process.env.SCRAPE_DIR
-  || path.join(ROOT, 'scrape', '20260611172119031');
+  || path.join(ROOT, 'scrape', '20260611204543362');
 const OUT = path.join(ROOT, 'public', 'checkout', 'index.html');
 const ASSETS = '/checkout/assets';
 

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "build:checkout": "node scripts/build-checkout-from-scrape.mjs",
     "test": "node scripts/test-proxy-rewrite.mjs && node scripts/test-checkout-intercept.mjs && node scripts/test-ws-smoke.mjs",
     "test:passthrough": "node scripts/test-checkout-passthrough.mjs"
   },
@@ -15,6 +16,7 @@
     "http-proxy-middleware": "^3.0.0"
   },
   "devDependencies": {
+    "cheerio": "^1.2.0",
     "puppeteer": "^24.0.0"
   }
 }

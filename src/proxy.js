@@ -103,16 +103,84 @@ function rewriteSetCookies(headers, mirrorHost) {
 }
 
 function rewriteStaticHtmlUrls(html) {
-  html = html.replace(/(?:https?:)?\/\/(?:www\.)?shop-titancore\.com/gi, '');
+  const origin = TARGET_ORIGIN;
+
+  function originCdn(path) {
+    if (!path || !/^\/cdn\/(?:shop|shopifycloud)\//i.test(path)) return path;
+    return `${origin}${path}`;
+  }
+
+  html = html.replace(
+    /(<script\b[^>]*\bsrc=["'])((?:https?:)?\/\/(?:www\.)?shop-titancore\.com)?(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["'])/gi,
+    (_, pre, _host, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+  html = html.replace(
+    /(<script\b[^>]*\bsrc=["'])(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["'])/gi,
+    (_, pre, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+
+  html = html.replace(
+    /(<link\b[^>]*\bhref=["'])((?:https?:)?\/\/(?:www\.)?shop-titancore\.com)?(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["'])/gi,
+    (_, pre, _host, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+  html = html.replace(
+    /(<link\b[^>]*\bhref=["'])(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["'])/gi,
+    (_, pre, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+
+  html = html.replace(
+    /(import\s*\(\s*["'])(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["']\s*\))/gi,
+    (_, pre, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+
+  html = html.replace(
+    /(<img\b[^>]*\bsrc=["'])((?:https?:)?\/\/(?:www\.)?shop-titancore\.com)?(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["'])/gi,
+    (_, pre, _host, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+  html = html.replace(
+    /(<img\b[^>]*\bsrc=["'])(\/cdn\/(?:shop|shopifycloud)\/[^"']+)(["'])/gi,
+    (_, pre, path, post) => `${pre}${originCdn(path)}${post}`,
+  );
+
+  html = html.replace(/(\bsrcset=["'])([^"']+)(["'])/gi, (_, pre, value, post) => {
+    const rewritten = value.split(',').map((part) => {
+      const p = part.trim();
+      const abs = p.match(/^((?:https?:)?\/\/(?:www\.)?shop-titancore\.com)(\/cdn\/(?:shop|shopifycloud)\/\S+)/);
+      if (abs) {
+        const rest = p.slice(abs[1].length + abs[2].length).trim();
+        return `${originCdn(abs[2])}${rest ? ` ${rest}` : ''}`;
+      }
+      if (/^\/cdn\/(?:shop|shopifycloud)\//i.test(p)) {
+        const pieces = p.split(/\s+/);
+        pieces[0] = originCdn(pieces[0]);
+        return pieces.join(' ');
+      }
+      return p;
+    }).join(', ');
+    return `${pre}${rewritten}${post}`;
+  });
+
   if (!PASSTHROUGH) {
     html = html.replace(/<script[^>]*\/checkouts\/internal\/preloads\.js[^>]*><\/script>/gi, '');
   }
   return html;
 }
 
+function patchBrokenVclidScript(html) {
+  return html.replace(
+    /(<link[^>]*theme\.css[^>]*\/><script>\s*\(function\(\)\{[\s\S]*?SameSite=Lax';\s*\}\s*)<\/script>/gi,
+    '$1})();</script>',
+  );
+}
+
 function patchStorefrontHtml(html) {
-  html = html.replace(TITANCORE_DOMAIN_RE, '');
   html = rewriteStaticHtmlUrls(html);
+  html = html.replace(/(?:https?:)?\/\/(?:www\.)?shop-titancore\.com(?!\/cdn\/)/gi, '');
+  html = html.replace(
+    /Shopify\.cdnHost\s*=\s*"shop-titancore\.com\/cdn"/gi,
+    'Shopify.cdnHost = location.host + "/cdn"',
+  );
+  html = patchBrokenVclidScript(html);
   html = html.replace(/<script[^>]*(googletagmanager|google-analytics|gtag|facebook\.net|hotjar|clarity|monorail|trekkie)[^>]*>[\s\S]*?<\/script>/gi, '');
   html = html.replace(/<link[^>]*manifest["'][^>]*>/gi, '');
 
@@ -234,6 +302,9 @@ export function createTitancoreProxy() {
           }
 
           if (encoding) delete headers['content-encoding'];
+          if (STATIC_RE.test(reqPath)) {
+            headers['cache-control'] = 'public, max-age=1800';
+          }
           headers['content-length'] = String(body.length);
           res.writeHead(status, headers);
           res.end(body);
@@ -255,4 +326,4 @@ export function createTitancoreProxy() {
   });
 }
 
-export { PASSTHROUGH, isCheckoutPath, isCheckoutRedirectUrl, rewriteLocation };
+export { PASSTHROUGH, isCheckoutPath, isCheckoutRedirectUrl, rewriteLocation, patchStorefrontHtml, rewriteStaticHtmlUrls };

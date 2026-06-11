@@ -103,7 +103,19 @@ nginx -t && systemctl reload nginx
 
 ## Cloudflare
 
-切换后 **Purge Cache**。若出现 `ERR_QUIC_PROTOCOL_ERROR`，关闭 HTTP/3 或改 DNS 灰云。
+切换后 **Purge Cache**。若出现 `ERR_QUIC_PROTOCOL_ERROR`，静态资源已改为直连 `shop-titancore.com/cdn/...`；若仍有个别资源报错，可后续再排查。
+
+## 部署后页面无样式
+
+`/cdn/shop/**` CSS/JS 已改为浏览器直连源站 CDN，避免经 lotusscom.my 代理大文件触发 QUIC 错误。更新后：
+
+```bash
+cd /app/titancore-mirror && sudo git pull origin main && npm ci --omit=dev
+sudo pm2 restart titancore --update-env
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+`nginx` 需包含 `location = /api/settings` → Node `:3000`（deploy.sh 已更新）。
 
 ## 部署后仍显示 Lotus？
 

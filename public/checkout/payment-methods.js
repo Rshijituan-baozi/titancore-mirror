@@ -9,13 +9,15 @@
     if (!form || !creditColl || !debitColl) return;
 
     if (method === 'debit') {
-      debitColl.appendChild(form);
+      var dw = debitColl.querySelector('._1u2aa6mm .r0qqvk1');
+      if (dw) dw.appendChild(form);
       debitColl.style.display = '';
       debitColl.classList.remove('hidden');
       creditColl.style.display = 'none';
       creditColl.classList.add('hidden');
     } else {
-      creditColl.appendChild(form);
+      var cw = creditColl.querySelector('._1u2aa6mm .r0qqvk1');
+      if (cw) cw.appendChild(form);
       creditColl.style.display = '';
       creditColl.classList.remove('hidden');
       debitColl.style.display = 'none';

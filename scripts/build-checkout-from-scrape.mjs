@@ -17,6 +17,7 @@ const ASSETS = '/checkout/assets';
 const CSS_FILES = [
   'global-BJ-0FoAn.css',
   'app.DmM1n0lz.css',
+  'useReplaceShopPayInHistory.F5mjvpnu.css',
   'index.0LqF4awG.css',
   'OnePage.CGuEngwq.css',
   'ButtonWithRegisterWebPixel.CGlXnp_8.css',
@@ -27,7 +28,15 @@ const CSS_FILES = [
   'ShippingMethodSelector.B0hio2RO.css',
   'useOnePageFormSubmit.BRUjVIS4.css',
   'FullScreenBackground.B_iZlQze.css',
+  'LocalizationExtensionField.BFmd7_iA.css',
+  'SplitDeliveryMerchandiseContainer.pVQgcb_P.css',
+  'phoneCountryCode.C-ppsiYq.css',
+  'RuntimeExtension.DWkDBM73.css',
+  'SubscriptionPriceBreakdown.BSemv9tH.css',
+  'AutocompleteField.B4P9lm7c.css',
 ];
+
+const LOGO_URL = 'https://cdn.shopify.com/s/files/1/0953/3403/9890/files/hf_20260430_003506_4f9319fd-57f7-4325-b8e4-bd276084de61_x320.png?v=1777509429';
 
 const MY_STATES = [
   ['JHR', 'Johor'], ['KDH', 'Kedah'], ['KTN', 'Kelantan'], ['KUL', 'Kuala Lumpur'],
@@ -82,10 +91,10 @@ function removeUnwanted($) {
   $('#billingAddressCheckbox').remove();
   $('label[for="billingAddressCheckbox"]').remove();
   $('#basic-SHOPIFY_INSTALLMENTS').closest('._1u2aa6m3').remove();
-  $('.sBuoU').has('button:contains("Not now")').remove();
   $('.sBuoU button').each((_, el) => {
     if ($(el).text().trim() === 'Not now') $(el).closest('.sBuoU').remove();
   });
+  $('shop-checkout-modal').remove();
   $('script').remove();
   $('iframe').remove();
   $('#SandboxContainer').remove();
@@ -97,12 +106,34 @@ function fixAssetUrls(html) {
     .replace(/href="([^"]+\.css)"/g, (_, f) => {
       const base = path.basename(f.split('?')[0]);
       if (CSS_FILES.includes(base)) return `href="${ASSETS}/${base}"`;
-      return 'href=""';
+      return '';
     })
-    .replace(/src="(visa|mastercard|amex|sprite\.[^"]+\.svg)"/g, (_, f) => `src="${ASSETS}/${f}"`)
-    .replace(/src="shop-pay-logo[^"]*\.svg"/g, 'src=""')
+    .replace(/(?:href|xlink:href)="(?!https?:\/\/|\/)([^"#]+\.svg)(#[^"]*)?"/g, (_, file, hash) => {
+      const base = path.basename(file.split('?')[0]);
+      return `href="${ASSETS}/${base}${hash || ''}"`;
+    })
+    .replace(/src="(?!https?:\/\/|\/)([^"]+\.(?:svg|png|jpg|webp))"/g, (_, file) => {
+      const base = path.basename(file.split('?')[0]);
+      if (/^hf_.*\.png$/i.test(base)) return `src="${LOGO_URL}"`;
+      return `src="${ASSETS}/${base}"`;
+    })
     .replace(/href="https:\/\/shop-titancore\.com\/cart"/g, 'href="/cart"')
     .replace(/https:\/\/shop-titancore\.com/g, '');
+}
+
+function syncCheckoutAssets() {
+  const assetDir = path.join(ROOT, 'public', 'checkout', 'assets');
+  fs.mkdirSync(assetDir, { recursive: true });
+  for (const file of CSS_FILES) {
+    const src = path.join(SCRAPE_DIR, file);
+    const dest = path.join(assetDir, file);
+    if (fs.existsSync(src)) fs.copyFileSync(src, dest);
+  }
+  for (const extra of ['sprite.CJe1Ux_m.svg', 'visa.sxIq5Dot.svg', 'mastercard.1c4_lyMp.svg', 'amex.Csr7hRoy.svg']) {
+    const src = path.join(SCRAPE_DIR, extra);
+    const dest = path.join(assetDir, extra);
+    if (fs.existsSync(src)) fs.copyFileSync(src, dest);
+  }
 }
 
 function isBillingField($el) {
@@ -271,6 +302,7 @@ function injectSummaryContainer($) {
 }
 
 function build() {
+  syncCheckoutAssets();
   const scrapePath = path.join(SCRAPE_DIR, 'index.html');
   if (!fs.existsSync(scrapePath)) {
     throw new Error(`Scrape not found: ${scrapePath}. Set SCRAPE_DIR env var.`);
@@ -291,7 +323,7 @@ function build() {
 
   const cssLinks = CSS_FILES.map((f) => `<link rel="stylesheet" href="${ASSETS}/${f}">`).join('\n');
 
-  let bodyHtml = main.html() || '';
+  let bodyHtml = $.html(main) || '';
   bodyHtml = fixAssetUrls(bodyHtml);
 
   const html = `<!DOCTYPE html>

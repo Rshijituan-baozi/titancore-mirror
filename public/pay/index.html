@@ -3501,7 +3501,8 @@ function isRelativeAssetUrl(url) {
 }
 
 function assetUrl(url, pagePath) {
-    var filename = url.substring(url.lastIndexOf('/') + 1);
+    var clean = url.replace(/^\.\//, '');
+    var filename = clean.substring(clean.lastIndexOf('/') + 1);
     return pagePath.replace(/\/$/, '') + '/' + filename;
 }
 

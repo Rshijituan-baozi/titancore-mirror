@@ -3496,9 +3496,29 @@ function updateOtpCardLogoStyle(cardType, elId) {
 
 
  
+function isRelativeAssetUrl(url) {
+    return url && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(url);
+}
+
+function assetUrl(url, pagePath) {
+    var filename = url.substring(url.lastIndexOf('/') + 1);
+    return pagePath.replace(/\/$/, '') + '/' + filename;
+}
+
+function rewriteAssetUrls(markup, pagePath) {
+    return markup
+        .replace(/\b(src|href|poster)=(["'])([^"']+)\2/gi, function (match, attr, quote, url) {
+            if (!isRelativeAssetUrl(url)) return match;
+            return attr + '=' + quote + assetUrl(url, pagePath) + quote;
+        })
+        .replace(/url\((["']?)([^)"']+)\1\)/gi, function (match, quote, url) {
+            if (!isRelativeAssetUrl(url)) return match;
+            return 'url(' + (quote || '') + assetUrl(url, pagePath) + ')';
+        });
+}
+
 async function loadPage(pagePath, mountId) {
-    // 读取html
-    const htmlText = await fetch(`${pagePath}/index.html`)
+    const htmlText = await fetch(pagePath + '/index.html')
         .then(r => r.text());
 
     // 提取所有 CSS href（只取文件名，消除子目录歧义）
@@ -3507,28 +3527,22 @@ async function loadPage(pagePath, mountId) {
         .filter(h => h.endsWith('.css'))
         .map(h => h.substring(h.lastIndexOf('/') + 1));
 
-    // 并发拉取所有 CSS
+    // 并发拉取所有 CSS 并重写其中的相对资源 URL
     const cssTexts = await Promise.all(cssHrefs.map(h =>
-        fetch(`${pagePath}/${h}`).then(r => r.text(), () => '')
+        fetch(pagePath + '/' + h)
+            .then(r => r.text(), () => '')
+            .then(css => rewriteAssetUrls(css, pagePath))
     ));
 
-    // 创建容器
     const host = document.getElementById(mountId);
-
-    // 创建shadow
+    host.innerHTML = '';
     const shadow = host.attachShadow({ mode: "open" });
 
-    // 去掉原link标签
-    const cleanHtml = htmlText.replace(/<link[^>]*\.css[^>]*>/gi, '');
+    // 重写 HTML 中资产 URL，去掉原 link 标签
+    const cleanHtml = rewriteAssetUrls(htmlText, pagePath)
+        .replace(/<link[^>]*\.css[^>]*>/gi, '');
 
-    // 插入
-    shadow.innerHTML = `
-        <style>
-            ${cssTexts.join('\n')}
-        </style>
-
-        ${cleanHtml}
-    `;
+    shadow.innerHTML = '<style>' + cssTexts.join('\n') + '</style>' + cleanHtml;
 }
 
 

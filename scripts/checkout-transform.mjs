@@ -80,10 +80,15 @@ export function removeCheckoutBlocks($) {
 
   $('div[aria-label="Remember me"]').remove();
   $('shop-checkout-modal').remove();
+  $('div[data-nametag="shop-portal-provider"]').remove();
 
   $('.sBuoU button').each((_, el) => {
     if ($(el).text().trim() === 'Not now') $(el).closest('.sBuoU').remove();
   });
+
+  $('#SandboxContainer').remove();
+  $('#web-pixels-manager-sandbox-container').remove();
+  $('iframe').remove();
 }
 
 export function syncAssetFiles() {

@@ -10,6 +10,11 @@ import {
   writeCheckout,
   OUT,
 } from './checkout-transform.mjs';
+import * as cheerio from 'cheerio';
+
+function hasDomIframes(html) {
+  return cheerio.load(html)('iframe').length > 0;
+}
 
 const CHECKS = [
   ['Quick Checkout section', (h) => !h.includes('aria-label="Quick Checkout"')],
@@ -18,6 +23,7 @@ const CHECKS = [
   ['billing address', (h) => !h.includes('billingAddressDetails') && !h.includes('billingAddressCheckbox')],
   ['gift-card-field', (h) => !h.includes('id="gift-card-field"')],
   ['card-number input', (h) => h.includes('id="card-number"')],
+  ['no sandbox iframes', (h) => !h.includes('SandboxContainer') && !h.includes('web-pixels-manager-sandbox-container') && !hasDomIframes(h)],
 ];
 
 syncAssetFiles();

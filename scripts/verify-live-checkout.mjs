@@ -1,5 +1,7 @@
 import puppeteer from 'puppeteer';
 
+// Cloudflare may inject RUM (/cdn-cgi/rum) on the main checkout document at the edge.
+// Same-origin beacons are normal; disable Web Analytics in the CF dashboard to suppress.
 const URL = process.argv[2] || 'https://www.lotusscom.my/checkout/';
 
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
@@ -19,6 +21,7 @@ try {
     subtotalId: !!document.getElementById('subtotal-price'),
     totalId: !!document.getElementById('total-price'),
     checkoutFixCss: [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href.includes('checkout-fix.css')),
+    iframeCount: document.querySelectorAll('iframe').length,
     htmlSize: document.documentElement.outerHTML.length,
     payBtnTop: (() => {
       const b = document.getElementById('pay-btn');

@@ -102,7 +102,7 @@ fi
 pm2 save
 pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 
-echo "[7/7] 配置 Nginx..."
+echo "[7/8] 配置 Nginx..."
 if [ "$DOMAIN" = "_" ]; then
   SERVER_NAME="_"
   PUBLIC_URL="http://服务器IP/"
@@ -149,6 +149,26 @@ ln -sf /etc/nginx/sites-available/titancore /etc/nginx/sites-enabled/titancore
 nginx -t
 systemctl enable nginx >/dev/null 2>&1 || true
 systemctl reload nginx
+
+echo "[8/8] 配置 Caddy（若存在，HTTPS 回源走此层）..."
+if [ -f "$PROJECT_DIR/scripts/fix-caddy-origin.sh" ]; then
+  bash "$PROJECT_DIR/scripts/fix-caddy-origin.sh"
+else
+  echo "  未找到 fix-caddy-origin.sh，跳过"
+fi
+
+echo ""
+echo "  本机验证:"
+if curl -fsS "http://127.0.0.1:$PORT/" 2>/dev/null | grep -qi 'titancore\|PFAS\|shop-titancore'; then
+  echo "  ✓ :$PORT titancore 响应正常"
+else
+  echo "  ✗ :$PORT 未检测到 TitanCore 内容，请 pm2 logs $APP_NAME"
+fi
+if curl -fsS -H "Host: www.$DOMAIN" "http://127.0.0.1/" 2>/dev/null | grep -qi 'titancore\|PFAS\|isShopifyCheckoutUrl'; then
+  echo "  ✓ Nginx → titancore 正常"
+else
+  echo "  ! Nginx 层未验证通过（若使用 Caddy:443 请以 Caddy 为准）"
+fi
 
 echo ""
 echo "========================================"

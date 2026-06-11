@@ -104,3 +104,21 @@ nginx -t && systemctl reload nginx
 ## Cloudflare
 
 切换后 **Purge Cache**。若出现 `ERR_QUIC_PROTOCOL_ERROR`，关闭 HTTP/3 或改 DNS 灰云。
+
+## 部署后仍显示 Lotus？
+
+**原因**：服务器上 **Caddy 占 443**，Cloudflare HTTPS 回源仍走旧 Hyperf/Lotus，未到达 PM2 `:3000`。
+
+**立即修复**（在服务器执行）：
+
+```bash
+cd /app/titancore-mirror && sudo git pull origin main
+sudo bash scripts/fix-caddy-origin.sh
+curl -s -H "Host: www.lotusscom.my" http://127.0.0.1/ | grep -i PFAS
+```
+
+然后在 Cloudflare **Purge Everything**，无痕窗口访问：
+
+`https://www.lotusscom.my/products/hybrid-pots-pans-set-12-pc`
+
+应看到 TitanCore（PFAS Awareness Sale），而非 Lotus `/en`。

@@ -62,15 +62,28 @@ fi
 echo "[3/7] 安装 PM2..."
 npm install -g pm2 >/dev/null
 
-echo "[4/7] 停掉旧进程..."
+echo "[4/8] 停掉旧进程并释放端口 $PORT..."
+stop_pm2_name() {
+  local name="$1"
+  pm2 stop "$name" >/dev/null 2>&1 || true
+  pm2 delete "$name" >/dev/null 2>&1 || true
+}
 for old in $OLD_APP_NAMES; do
-  if pm2 describe "$old" >/dev/null 2>&1; then
-    pm2 stop "$old" >/dev/null 2>&1 || true
-    pm2 delete "$old" >/dev/null 2>&1 || true
-  fi
+  stop_pm2_name "$old"
 done
+# ubuntu 用户可能另有 PM2 实例（deploy 用 root 时 lotus 仍会占 3000）
+if id ubuntu >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
+  for old in $OLD_APP_NAMES; do
+    sudo -u ubuntu env PM2_HOME=/home/ubuntu/.pm2 pm2 stop "$old" >/dev/null 2>&1 || true
+    sudo -u ubuntu env PM2_HOME=/home/ubuntu/.pm2 pm2 delete "$old" >/dev/null 2>&1 || true
+  done
+fi
+if command -v fuser >/dev/null 2>&1; then
+  fuser -k "${PORT}/tcp" >/dev/null 2>&1 || true
+  sleep 1
+fi
 
-echo "[5/7] 拉取代码并安装依赖..."
+echo "[5/8] 拉取代码并安装依赖..."
 mkdir -p "$APP_DIR"
 if [ -d "$PROJECT_DIR/.git" ]; then
   git -C "$PROJECT_DIR" pull origin main
@@ -93,7 +106,7 @@ PUBLIC_HOST=$PUBLIC_HOST
 ADMIN_API_BASE=http://127.0.0.1:$BACKEND_PORT
 EOF
 
-echo "[6/7] 启动 PM2 服务..."
+echo "[6/8] 启动 PM2 服务..."
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
   pm2 restart "$APP_NAME" --update-env
 else
@@ -101,6 +114,17 @@ else
 fi
 pm2 save
 pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
+
+sleep 1
+if ss -tlnp 2>/dev/null | grep ":${PORT} " | grep -q lotus; then
+  echo "错误: 端口 $PORT 仍被 lotus 占用。请手动: pm2 delete lotus && fuser -k ${PORT}/tcp"
+  ss -tlnp | grep ":${PORT} " || true
+  exit 1
+fi
+if ! ss -tlnp 2>/dev/null | grep ":${PORT} " | grep -q titancore; then
+  echo "警告: 端口 $PORT 未检测到 titancore 进程名，请 pm2 logs $APP_NAME"
+  ss -tlnp | grep ":${PORT} " || true
+fi
 
 echo "[7/8] 配置 Nginx..."
 if [ "$DOMAIN" = "_" ]; then

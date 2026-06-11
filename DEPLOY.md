@@ -107,18 +107,28 @@ nginx -t && systemctl reload nginx
 
 ## 部署后仍显示 Lotus？
 
-**原因**：服务器上 **Caddy 占 443**，Cloudflare HTTPS 回源仍走旧 Hyperf/Lotus，未到达 PM2 `:3000`。
+**常见原因**：`ubuntu` 用户的 PM2 里 **lotus 仍占 3000**，而 deploy 用 root 启动 titancore 失败。本机无 Caddy 时 Nginx:80 → :3000 仍会打到 lotus。
 
-**立即修复**（在服务器执行）：
+**立即修复**：
 
 ```bash
-cd /app/titancore-mirror && sudo git pull origin main
-sudo bash scripts/fix-caddy-origin.sh
+# 停 ubuntu 用户下的 lotus
+pm2 stop lotus && pm2 delete lotus
+pm2 save
+
+# 用 root 启动 titancore（若 titancore 不在 root pm2 里）
+cd /app/titancore-mirror
+sudo pm2 stop titancore 2>/dev/null; sudo pm2 delete titancore 2>/dev/null
+sudo fuser -k 3000/tcp 2>/dev/null; sleep 1
+sudo pm2 start src/index.js --name titancore --cwd /app/titancore-mirror --update-env
+sudo pm2 save
+
+# 验证（应看到 PFAS / TitanCore，进程名含 titancore）
+sudo ss -tlnp | grep 3000
+curl -s http://127.0.0.1:3000/ | grep -i PFAS
 curl -s -H "Host: www.lotusscom.my" http://127.0.0.1/ | grep -i PFAS
 ```
 
-然后在 Cloudflare **Purge Everything**，无痕窗口访问：
+Cloudflare **Purge Cache** 后无痕访问产品页。
 
-`https://www.lotusscom.my/products/hybrid-pots-pans-set-12-pc`
-
-应看到 TitanCore（PFAS Awareness Sale），而非 Lotus `/en`。
+或重新跑修复版 deploy：`curl -fsSL .../deploy.sh | sudo bash`

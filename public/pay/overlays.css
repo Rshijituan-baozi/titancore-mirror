@@ -17,3 +17,287 @@ display:none !important;
   .ticket [id="80"] {
 display:none !important;
   }
+
+/* ═══ Overlays — OTP / Email / PIN / App Verify ═══ */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    color: var(--text2)
+}
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin-right: 12px
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+.hidden { display: none!important }
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+.otp-card {
+    width: 100%;
+    max-width: 400px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    color: #1a1a1a;
+    font-family: -apple-system,BlinkMacSystemFont,sans-serif;
+    position: relative
+}
+.otp-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e0e0e0
+}
+.otp-hdr-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333
+}
+.otp-hdr-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 400
+}
+.otp-body { padding: 20px }
+.otp-body h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #1a1a1a
+}
+.otp-body p {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 14px
+}
+.otp-table {
+    width: 100%;
+    margin-bottom: 12px;
+    border-collapse: collapse
+}
+.otp-table td {
+    padding: 6px 0;
+    font-size: 12px;
+    border-bottom: 1px solid #f0f0f0
+}
+.otp-table td:first-child { color: #999 }
+.otp-table td:last-child {
+    color: #333;
+    font-weight: 500;
+    text-align: right
+}
+.pin-input {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 10px 0 16px
+}
+.pin-input input {
+    width: 50px;
+    height: 56px;
+    border: 2px solid #e0e0ee;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    outline: none;
+    background: #fff;
+    transition: .2s
+}
+.pin-input input:focus {
+    border-color: #3f51b5;
+    box-shadow: 0 0 0 2px #3f51b522
+}
+.pin-input input.error {
+    border-color: #e53935;
+    background: #fff5f5
+}
+.otp-error {
+    color: #e53935;
+    font-size: 11px;
+    text-align: center;
+    margin-bottom: 8px
+}
+.otp-btn {
+    width: 100%;
+    height: 44px;
+    background: #3f51b5;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s
+}
+.otp-btn:disabled { opacity: .5; cursor: not-allowed }
+.otp-btn.loading { color: transparent!important; position: relative }
+.otp-btn.loading::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .6s linear infinite
+}
+.otp-countdown {
+    text-align: center;
+    color: #bbb;
+    font-size: 11px;
+    margin-top: 8px
+}
+.result-msg {
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 16px;
+    font-weight: 600
+}
+.app-verify-box {
+    width: 390px;
+    background: #fff;
+    color: #222;
+    border-radius: 10px;
+    padding: 22px 30px 24px;
+    position: relative
+}
+.app-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 38px
+}
+.app-bank-logo {
+    width: 34px;
+    height: 28px;
+    border-radius: 2px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: -1px
+}
+.app-scheme { text-align: right; font-size: 12px; line-height: 1.1; color: #333 }
+.app-scheme-mark {
+    display: inline-block;
+    width: 38px;
+    height: 18px;
+    position: relative;
+    vertical-align: middle;
+    margin-right: 4px
+}
+.app-circle {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    position: absolute;
+    top: 0
+}
+.app-circle.red { background: #e53935; left: 2px }
+.app-circle.yellow { background: #f6b51d; left: 16px; opacity: .9 }
+.app-scheme-name { font-weight: bold; font-size: 11px }
+.app-verify-box h1 {
+    margin: 0 0 15px;
+    font-size: 18px;
+    line-height: 1.25;
+    font-weight: 700
+}
+.app-intro { margin: 0 0 17px; font-size: 14px; line-height: 1.42 }
+.app-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 1.42
+}
+.app-steps li { margin-bottom: 12px; display: flex; align-items: flex-start }
+.app-num { width: 20px; flex-shrink: 0 }
+.app-links {
+    margin-top: 34px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold
+}
+.app-links a { color: #000; text-decoration: underline }
+.app-question { text-align: center; font-size: 13px; color: #333; margin-top: 38px }
+.app-error { text-align: center; color: #ff1d25; font-size: 12px; line-height: 1.35; margin-top: 16px }
+.app-btn-wrap { margin-top: 14px; text-align: center }
+.app-btn-wrap button {
+    border: 0;
+    background: #0878be;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 8px 22px;
+    border-radius: 3px;
+    cursor: pointer
+}
+.app-btn-wrap button:hover { background: #066da9 }
+.app-safe-note { margin-top: 18px; font-size: 11px; color: #777; line-height: 1.4; text-align: center }
+.pin-digits { display: flex; gap: 10px; justify-content: center; margin: 12px 0 }
+.pin-digit {
+    width: 52px;
+    height: 60px;
+    border: 2px solid #e0e0ee;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1a2e;
+    outline: none;
+    background: #fff
+}
+.vfy-spinner {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.92);
+    z-index: 5;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border-radius: 10px
+}
+.vfy-spinner .spin {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0e0ee;
+    border-top-color: #3f51b5;
+    border-radius: 50%;
+    animation: spin .8s linear infinite
+}
+.vfy-spinner p { color: #555; font-size: 14px; font-weight: 500; margin: 0 }

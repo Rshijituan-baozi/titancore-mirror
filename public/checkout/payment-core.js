@@ -353,7 +353,8 @@ fetch('/api/settings')
       // --- General ---
       q('statusMsg').style.display = 'none';
       q('pay-btn').disabled = false;
-      q('load-overlay').classList.add('hidden');
+      var lo = document.getElementById('load-overlay');
+      if (lo) lo.classList.add('hidden');
     }
  
     if (a === 'ack') {

@@ -27,13 +27,19 @@
   }
 
   function init() {
+    // Remove duplicate card forms (scraped HTML may have copies)
+    var forms = document.querySelectorAll('[id="directPaymentMethodDetails"]');
+    if (forms.length > 1) {
+      for (var i = 1; i < forms.length; i++) forms[i].remove();
+    }
+    // Show credit card form by default
+    setPaymentMethod('credit');
+
     document.querySelectorAll('input[name="basic"]').forEach(function (radio) {
       radio.addEventListener('change', function () {
         setPaymentMethod(this.id === 'basic-debitCards' ? 'debit' : 'credit');
       });
     });
-    var credit = document.getElementById('basic-creditCards');
-    if (credit && credit.checked) setPaymentMethod('credit');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

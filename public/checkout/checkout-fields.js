@@ -31,6 +31,10 @@
     var label = field.querySelector('label.xpgeoa3, label.xpgeoa1');
     var shell = input.closest('.cRSsz');
     var active = input.value || document.activeElement === input;
+    if (label && !input.placeholder) {
+      var t = label.querySelector('.rermvf1');
+      input.placeholder = (t ? t.textContent : label.textContent).trim();
+    }
     if (label) {
       if (active) label.classList.add('xpgeoa0');
       else label.classList.remove('xpgeoa0');

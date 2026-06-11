@@ -42,6 +42,8 @@ export function replaceCardIframes($) {
     $host.removeAttr('tabindex data-card-fields data-card-field-placeholder data-card-field-prefix');
     $host.removeClass('_211UF');
 
+    const labelText = $label.find('.rermvf1').first().text().trim() || $label.text().trim();
+
     const attrs = [
       `id="${f.inputId}"`,
       `class="${INPUT_CLASS}"`,
@@ -50,9 +52,12 @@ export function replaceCardIframes($) {
       `aria-labelledby="${f.labelId}"`,
     ];
     if (f.inputmode) attrs.push(`inputmode="${f.inputmode}"`);
+    if (labelText) attrs.push(`placeholder="${labelText.replace(/"/g, '&quot;')}"`);
 
     $host.empty().append(`<input ${attrs.join(' ')}>`);
   }
+
+  $('button[aria-label*="Security code"]').closest('._4VRZE').remove();
 
   for (const extraId of ['issue_date', 'issue_number']) {
     const $host = $(`#${extraId}`).first();

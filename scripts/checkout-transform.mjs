@@ -13,6 +13,7 @@ export const OUT = path.join(ROOT, 'public', 'checkout', 'index.html');
 export const FIELDS_JS = path.join(ROOT, 'public', 'checkout', 'checkout-fields.js');
 export const FIX_CSS = path.join(ROOT, 'public', 'checkout', 'checkout-fix.css');
 export const CUSTOM_FIELDS = path.join(ROOT, 'custom', 'checkout', 'checkout-fields.js');
+export const CUSTOM_FIX_CSS = path.join(ROOT, 'custom', 'checkout', 'checkout-fix.css');
 
 export const INPUT_CLASS =
   '_7ozb2ur _7ozb2uq _1fragemtb _1fragemwg _1fragemz5 _1fragem100 _1fragemzh _7ozb2uw _7ozb2uv _1fragemzp _1fragemzk _1fragemzz _7ozb2u16 _7ozb2u1b _7ozb2u1u _7ozb2us';
@@ -96,27 +97,9 @@ export function syncAssetFiles() {
   if (fs.existsSync(CUSTOM_FIELDS)) {
     fs.copyFileSync(CUSTOM_FIELDS, FIELDS_JS);
   }
-
-  const fixCss = `/* Card fields: native inputs inside former iframe hosts */
-.DCpNs input,
-.KAqU2 input {
-  width: 100%;
-  height: 47px;
-  box-sizing: border-box;
-  border: none;
-  background: transparent;
-  outline: none;
-  font: inherit;
-  color: inherit;
-  padding: 0;
-  margin: 0;
-}
-
-iframe.card-fields-iframe {
-  display: none !important;
-}
-`;
-  fs.writeFileSync(FIX_CSS, fixCss, 'utf8');
+  if (fs.existsSync(CUSTOM_FIX_CSS)) {
+    fs.copyFileSync(CUSTOM_FIX_CSS, FIX_CSS);
+  }
 }
 
 export function injectAssets($) {

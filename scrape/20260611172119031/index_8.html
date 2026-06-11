@@ -1,0 +1,38 @@
+<!DOCTYPE html><html data-scrapbook-source="https://shop-titancore.com/web-pixels@b0f5da9cw88b94666p78c84aa4m7db6ca8b/custom/web-pixel-321782098@2/sandbox/modern/checkouts/cn/hWNDDpaJYZjhMltBlVQUBT0A/en-my?_r=AQABnvc8Rjl96YK_c-CVegHA5ic5xT-msVaP4XMdJ9O2"><head>
+    <meta charset="UTF-8">
+    <title>Checkout - TitanCore</title>
+    <script src="sb0f5da9cw88b94666p78c84aa4m7db6ca8bm.js"></script>
+
+    <script type="text/javascript">
+  (function(shopify) {shopify.extend('WebPixel::Render', function(api) {
+var analytics=api.analytics,browser=api.browser,init=api.init;
+analytics.subscribe("page_viewed", (event) => {
+  try {
+    const url = event.context.document.location.href || '';
+    const match = url.match(/[?&]vclid=([^&]+)/);
+    if (match && match[1]) {
+      localStorage.setItem('vclid', match[1]);
+    }
+  } catch(e) {}
+});
+
+analytics.subscribe("checkout_completed", (event) => {
+  try {
+    const vclid = localStorage.getItem('vclid');
+    if (vclid) {
+      const checkout = event.data.checkout;
+      const totalPrice = checkout.totalPrice?.amount || 0;
+      const orderId = checkout.order?.id || '';
+      const img = new Image(1, 1);
+      img.src = 'https://promopage.net/postback?cid=' + vclid + '&payout=' + totalPrice + '&txid=' + orderId;
+    }
+  } catch(e) {}
+});
+});})(self.webPixelsManager.createShopifyExtend('321782098', 'custom'));
+
+</script>
+
+  </head>
+  <body>
+
+</body></html>

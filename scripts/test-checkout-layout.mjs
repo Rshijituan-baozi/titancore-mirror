@@ -39,6 +39,9 @@ try {
   assert(!html.includes('Save my information for a faster checkout'), 'checkout HTML should not contain Shop save checkbox');
   assert(!html.includes('Accept Offer'), 'checkout HTML should not contain Accept Offer');
   assert(!html.includes('<aside data-inspector-id="orderSummary"'), 'checkout HTML should not contain mobile orderSummary aside');
+  assert(html.includes('Step 3'), 'checkout HTML should contain Step 3 payment section');
+  assert(html.includes('Secure Checkout'), 'checkout HTML should contain Secure Checkout');
+  assert(!html.includes('placeholder="Email"'), 'email field should not duplicate label via placeholder');
   assert(html.includes('id="summary-items"'), 'checkout HTML should contain #summary-items');
   assert(html.includes('id="pay-btn"'), 'checkout HTML should contain #pay-btn');
   assert(html.includes('checkout-fix.css'), 'checkout HTML should link checkout-fix.css');

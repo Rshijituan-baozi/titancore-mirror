@@ -23,6 +23,12 @@ aside[data-inspector-id="orderSummary"] {
   cursor: pointer;
 }
 
+/* Avoid label + placeholder double text on empty fields */
+._7ozb2u7._7ozb2u1u input::placeholder,
+._7ozb2u7:has(label.xpgeoa0) input::placeholder {
+  color: transparent;
+}
+
 #subtotal-price,
 #total-price {
   font-variant-numeric: tabular-nums;

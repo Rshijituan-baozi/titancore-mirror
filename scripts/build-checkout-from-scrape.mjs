@@ -140,6 +140,9 @@ function cleanupLayout($) {
           $(row).find('strong, span, td, p, div').last().attr('id', 'subtotal-price');
         }
         if (/^Total/i.test(text) || (text.includes('MYR') && text.includes('RM'))) {
+          $(row).find('span, strong').each((_, el) => {
+            if ($(el).text().trim() === 'MYR') $(el).remove();
+          });
           $(row).find('strong, span, td, p, div').last().attr('id', 'total-price');
         }
         if (/Enter shipping address/i.test(text)) {
@@ -173,6 +176,26 @@ function cleanupLayout($) {
 
   if (!$('#subtotal-price').length) $('body').append('<span id="subtotal-price" hidden></span>');
   if (!$('#total-price').length) $('body').append('<span id="total-price" hidden></span>');
+}
+
+function fixFloatingLabels($) {
+  $('._7ozb2u7').each((_, wrap) => {
+    const $wrap = $(wrap);
+    const $input = $wrap.find('input, textarea').first();
+    const $label = $wrap.find('label.xpgeoa3, label.xpgeoa1').first();
+    if (!$input.length || !$label.length) return;
+    $input.removeAttr('placeholder');
+    if (!$input.val()) {
+      $wrap.removeClass('_7ozb2u1u');
+      $label.removeClass('xpgeoa0');
+    }
+  });
+
+  $('.RD23h select, .VZudx select, #bill-state, #bill-country').each((_, sel) => {
+    const $sel = $(sel);
+    const $label = $sel.closest('.RD23h, .VZudx').find('label.QCxaD').first();
+    if ($label.length && !$sel.val()) $label.removeClass('A9HkF');
+  });
 }
 
 function fixAssetUrls(html) {
@@ -352,6 +375,7 @@ function build() {
   fixStateSelect($);
   setupPaymentMethods($);
   cleanupLayout($);
+  fixFloatingLabels($);
 
   const cssLinks = CSS_FILES.map((f) => `<link rel="stylesheet" href="${ASSETS}/${f}">`).join('\n');
 

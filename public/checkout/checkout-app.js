@@ -22,7 +22,13 @@ function renderSummary(order){
   var tot=document.getElementById('total-price');
   var priceText=formatMoney(amt,cur);
   if(sub) sub.textContent=priceText;
-  if(tot) tot.textContent=priceText;
+  if(tot) {
+    tot.textContent=priceText;
+    var row=tot.closest('[role="row"]');
+    if(row) row.querySelectorAll('span,strong').forEach(function(n){
+      if(n!==tot && /^MYR$/i.test((n.textContent||'').trim())) n.remove();
+    });
+  }
   document.querySelectorAll('[data-tc-shipping]').forEach(function(node){
     node.textContent='Free';
   });

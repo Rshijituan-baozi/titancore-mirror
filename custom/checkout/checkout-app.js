@@ -46,6 +46,7 @@
     document.querySelectorAll('[data-tc-shipping]').forEach(function (node) {
       node.textContent = 'Free';
     });
+    window.dispatchEvent(new Event('tc:layout-refresh'));
   }
 
   fetch('/cart.js', { credentials: 'same-origin' })
@@ -73,6 +74,81 @@
   window.addEventListener('tc:payment-method', function () {
     renderSummary(readOrder());
   });
+
+  /* ── Mobile layout: cart top → payment → totals + Pay now ── */
+  var MOBILE_MQ = window.matchMedia('(max-width: 999px)');
+  var _layoutSlots = {};
+
+  function rememberSlot(el, key) {
+    if (!el || _layoutSlots[key]) return;
+    _layoutSlots[key] = { el: el, parent: el.parentNode, next: el.nextSibling };
+  }
+
+  function restoreMobileLayout() {
+    Object.keys(_layoutSlots).forEach(function (key) {
+      var slot = _layoutSlots[key];
+      if (!slot || !slot.parent || !slot.el) return;
+      if (slot.el.parentNode !== slot.parent) {
+        slot.parent.insertBefore(slot.el, slot.next);
+      }
+    });
+    document.body.classList.remove('tc-mobile-layout');
+  }
+
+  function layoutMobileCheckout() {
+    var main = document.getElementById('checkout-main');
+    var paymentSection = document.querySelector('section[aria-label="Step 3/3: Secure Checkout"]');
+    var summaryItems = document.getElementById('summary-items');
+    var subtotal = document.getElementById('subtotal-price');
+    var payBtn = document.getElementById('pay-btn');
+    if (!main || !paymentSection || !summaryItems || !subtotal || !payBtn) return;
+
+    if (!MOBILE_MQ.matches) {
+      restoreMobileLayout();
+      return;
+    }
+
+    var topSlot = document.getElementById('tc-mobile-cart-top');
+    if (!topSlot) {
+      topSlot = document.createElement('div');
+      topSlot.id = 'tc-mobile-cart-top';
+      main.insertBefore(topSlot, main.firstChild);
+    }
+
+    var payBar = document.getElementById('tc-mobile-pay-bar');
+    if (!payBar) {
+      payBar = document.createElement('div');
+      payBar.id = 'tc-mobile-pay-bar';
+      payBar.className = 'tc-mobile-pay-bar';
+      paymentSection.insertAdjacentElement('afterend', payBar);
+    }
+
+    var cartBlock = summaryItems.closest('section[aria-label="Shopping cart"]') || summaryItems.parentElement;
+    var costBlock = subtotal.closest('section');
+
+    rememberSlot(cartBlock, 'cart');
+    rememberSlot(costBlock, 'cost');
+    rememberSlot(payBtn, 'pay');
+
+    if (cartBlock && cartBlock.parentNode !== topSlot) topSlot.appendChild(cartBlock);
+    if (costBlock && costBlock.parentNode !== payBar) payBar.appendChild(costBlock);
+    if (payBtn.parentNode !== payBar) payBar.appendChild(payBtn);
+
+    document.body.classList.add('tc-mobile-layout');
+  }
+
+  function scheduleMobileLayout() {
+    layoutMobileCheckout();
+    requestAnimationFrame(layoutMobileCheckout);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleMobileLayout);
+  } else {
+    scheduleMobileLayout();
+  }
+  window.addEventListener('resize', scheduleMobileLayout);
+  window.addEventListener('tc:layout-refresh', scheduleMobileLayout);
 
   document.head.insertAdjacentHTML('beforeend',
     '<style>#summary-items .tc-summary-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #e6dac2;align-items:center}' +

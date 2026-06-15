@@ -13,6 +13,7 @@
 #
 #  可选覆盖:
 #    DOMAIN=lotusscom.my PORT=3000 sudo -E bash deploy.sh
+#    EXTRA_DOMAINS="titancore.my www.titancore.my other.com www.other.com" sudo -E bash deploy.sh
 # ============================================
 set -Eeuo pipefail
 
@@ -27,6 +28,7 @@ NODE_MAJOR="${NODE_MAJOR:-20}"
 PROJECT_DIR="$APP_DIR/titancore-mirror"
 TARGET_URL="${TARGET_URL:-https://shop-titancore.com}"
 PUBLIC_HOST="${PUBLIC_HOST:-www.lotusscom.my}"
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-titancore.my www.titancore.my}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "请用 root 执行，例如: curl -fsSL <deploy.sh> | sudo bash"
@@ -129,7 +131,7 @@ if [ "$DOMAIN" = "_" ]; then
   SERVER_NAME="_"
   PUBLIC_URL="http://服务器IP/"
 else
-  SERVER_NAME="$DOMAIN www.$DOMAIN"
+  SERVER_NAME="$DOMAIN www.$DOMAIN $EXTRA_DOMAINS"
   PUBLIC_URL="https://www.$DOMAIN/"
 fi
 

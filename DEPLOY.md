@@ -89,6 +89,73 @@ npm run test:passthrough   # PoC：透传原站 checkout（不劫持）
 node scripts/test-ws-smoke.mjs
 ```
 
+## 添加域名 titancore.my
+
+**后台「前端域名」不会生效**（那只改 soybean 的 Nginx）。TitanCore 镜像要在 **Cloudflare + 服务器 Nginx** 上配置。
+
+### 1. Cloudflare（域名 titancore.my）
+
+| 类型 | 名称 | 内容 | 说明 |
+|------|------|------|------|
+| A | `@` | 与 lotusscom.my 相同的服务器 IP | 裸域 |
+| A 或 CNAME | `www` | 同上或 `@` | 建议也加 www |
+| SSL | — | 完全 / 灵活 | 与现站一致即可 |
+
+保存后 **Purge Cache**。
+
+### 2. 服务器 Nginx（二选一）
+
+**方式 A — 手动改（最快）**
+
+```bash
+sudo nano /etc/nginx/sites-available/titancore
+```
+
+把 `server_name` 改成包含新域，例如：
+
+```nginx
+server_name lotusscom.my www.lotusscom.my titancore.my www.titancore.my;
+```
+
+然后：
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**方式 B — 用 deploy 脚本重写 Nginx**
+
+```bash
+cd /app/titancore-mirror
+git pull origin main
+sudo EXTRA_DOMAINS="titancore.my www.titancore.my" bash deploy.sh
+# 或只重跑 Nginx 段：同上，脚本会写入 EXTRA_DOMAINS
+```
+
+### 3. Node / .env
+
+**一般不用改代码**。多域名共用同一套反代，靠请求里的 `Host` 即可。
+
+若希望 Cookie 兜底域名改为 titancore.my，可编辑 `/app/titancore-mirror/.env`：
+
+```env
+PUBLIC_HOST=www.titancore.my
+```
+
+然后 `pm2 restart titancore --update-env`。与 lotusscom.my **同时使用时** 可保持 `PUBLIC_HOST=www.lotusscom.my` 或不填。
+
+### 4. 验收
+
+```bash
+curl -sI -H "Host: www.titancore.my" http://127.0.0.1/ | head -5
+```
+
+浏览器访问：
+
+- https://www.titancore.my/
+- https://www.titancore.my/products/hybrid-pots-pans-set-12-pc
+- https://www.titancore.my/checkout/
+
 ## Advertorial 落地页 `/tpmn/lan`
 
 源站 [shop-titancore.com/tpmn/lan](https://www.shop-titancore.com/tpmn/lan) 的软文页**只挂在 `www.shop-titancore.com`**，裸域会 404。同域还有 `/core.min.js`、`/core.min.css` 等 Advertorial 静态资源也只在 www 上。镜像对 `/tpmn/*`、`/core.min.*`、`/public/*` 走 www 上游。

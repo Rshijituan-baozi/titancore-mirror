@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # ============================================
-#  titancore-mirror 一键部署（lotusscom.my 替换 Lotus/Neoflam）
+#  titancore-mirror 一键部署（titancore.my）
 #
 #  默认配置:
 #    目录: /app/titancore-mirror
 #    PM2:  titancore
 #    端口: 3000
-#    域名: lotusscom.my
+#    域名: titancore.my
 #
 #  用法:
 #    curl -fsSL https://raw.githubusercontent.com/Rshijituan-baozi/titancore-mirror/main/deploy.sh | sudo bash
 #
 #  可选覆盖:
-#    DOMAIN=lotusscom.my PORT=3000 sudo -E bash deploy.sh
-#    EXTRA_DOMAINS="titancore.my www.titancore.my other.com www.other.com" sudo -E bash deploy.sh
+#    DOMAIN=titancore.my PORT=3000 sudo -E bash deploy.sh
+#    EXTRA_DOMAINS="other.com www.other.com" sudo -E bash deploy.sh
 # ============================================
 set -Eeuo pipefail
 
@@ -21,14 +21,14 @@ APP_DIR="${APP_DIR:-/app}"
 APP_NAME="${APP_NAME:-titancore}"
 OLD_APP_NAMES="${OLD_APP_NAMES:-lotus neoflam}"
 REPO="${REPO:-https://github.com/Rshijituan-baozi/titancore-mirror.git}"
-DOMAIN="${DOMAIN:-lotusscom.my}"
+DOMAIN="${DOMAIN:-titancore.my}"
 PORT="${PORT:-3000}"
 BACKEND_PORT="${BACKEND_PORT:-9528}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
 PROJECT_DIR="$APP_DIR/titancore-mirror"
 TARGET_URL="${TARGET_URL:-https://shop-titancore.com}"
-PUBLIC_HOST="${PUBLIC_HOST:-www.lotusscom.my}"
-EXTRA_DOMAINS="${EXTRA_DOMAINS:-titancore.my www.titancore.my}"
+PUBLIC_HOST="${PUBLIC_HOST:-www.titancore.my}"
+EXTRA_DOMAINS="${EXTRA_DOMAINS:-}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "请用 root 执行，例如: curl -fsSL <deploy.sh> | sudo bash"
@@ -131,7 +131,10 @@ if [ "$DOMAIN" = "_" ]; then
   SERVER_NAME="_"
   PUBLIC_URL="http://服务器IP/"
 else
-  SERVER_NAME="$DOMAIN www.$DOMAIN $EXTRA_DOMAINS"
+  SERVER_NAME="$DOMAIN www.$DOMAIN"
+  if [ -n "$EXTRA_DOMAINS" ]; then
+    SERVER_NAME="$SERVER_NAME $EXTRA_DOMAINS"
+  fi
   PUBLIC_URL="https://www.$DOMAIN/"
 fi
 

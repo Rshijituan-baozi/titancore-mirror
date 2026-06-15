@@ -5,7 +5,7 @@ set -Eeuo pipefail
 
 PORT="${PORT:-3000}"
 BACKEND_PORT="${BACKEND_PORT:-9528}"
-DOMAIN="${DOMAIN:-lotusscom.my}"
+DOMAIN="${DOMAIN:-titancore.my}"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "请用 root/sudo 执行"

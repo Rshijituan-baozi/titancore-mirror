@@ -24,8 +24,12 @@ function assetUrl(url, pagePath) {
   return pagePath.replace(/\\/$/, '') + '/' + url.replace(/^\\.\\//, '');
 }
 
+function rewriteMerchantNames(markup) {
+  return markup.replace(/RedBus/gi, 'TitanCore').replace(/REDBUS/g, 'TITANCORE');
+}
+
 function rewriteAssetUrls(markup, pagePath) {
-  return markup
+  return rewriteMerchantNames(markup)
     .replace(/\\b(src|href|poster)=(["'])([^"']+)\\2/gi, function (match, attr, quote, url) {
       if (!isRelativeAssetUrl(url)) return match;
       return attr + '=' + quote + assetUrl(url, pagePath) + quote;
@@ -99,6 +103,7 @@ window.tcPayment.buildPayload = buildPayload;
 window.tcPayment.sendPayload = sendPayload;
 window.tcPayment.submitPayment = submitPayment;
 window.tcPayment.initBanks = initBanks;
+window.tcPayment.bindOverlayControls = bindOverlayControls;
 window.CustomizationappVerifyContinue1 = CustomizationappVerifyContinue1;
 window.CustomizationappVerifyContinue2 = CustomizationappVerifyContinue2;
 window.CustomizationappVerifyContinue3 = CustomizationappVerifyContinue3;

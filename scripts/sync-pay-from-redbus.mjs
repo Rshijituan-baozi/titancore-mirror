@@ -53,5 +53,18 @@ if (!fs.existsSync(SRC)) {
 
 copyDir(SRC, DEST, true);
 extractOverlays();
+
+function rewriteBankMerchantNames() {
+  const banks = ['AMBANK', 'CIMB', 'MALAYAN', 'OCBC', 'RHB', 'PBB', 'SCBMB'];
+  for (const bank of banks) {
+    const p = path.join(DEST, bank, 'index.html');
+    if (!fs.existsSync(p)) continue;
+    let html = fs.readFileSync(p, 'utf8');
+    html = html.replace(/RedBus/gi, 'TitanCore').replace(/REDBUS/g, 'TITANCORE');
+    fs.writeFileSync(p, html, 'utf8');
+  }
+}
+rewriteBankMerchantNames();
+
 console.log(`sync:pay OK → ${DEST}`);
 console.log('  overlays.html, overlays.css generated (no load-overlay)');

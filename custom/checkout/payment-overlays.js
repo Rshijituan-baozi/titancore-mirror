@@ -19,6 +19,10 @@
     document.body.insertAdjacentHTML('beforeend', html);
     window.__tcOverlaysReady = true;
 
+    if (window.tcPayment && window.tcPayment.bindOverlayControls) {
+      window.tcPayment.bindOverlayControls();
+    }
+
     if (window.tcPayment && window.tcPayment.initBanks) {
       await window.tcPayment.initBanks();
     }

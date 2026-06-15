@@ -72,6 +72,12 @@ npm run test:passthrough   # PoC：透传原站 checkout（不劫持）
 node scripts/test-ws-smoke.mjs
 ```
 
+## Advertorial 落地页 `/tpmn/lan`
+
+源站 [shop-titancore.com/tpmn/lan](https://www.shop-titancore.com/tpmn/lan) 的软文页**只挂在 `www.shop-titancore.com`**，裸域 `shop-titancore.com/tpmn/lan` 会 404。镜像默认反代裸域商品站，因此需对 `/tpmn/*` 单独走 `www` 上游（`src/proxy.js` 已处理）。
+
+部署后验收：`https://www.lotusscom.my/tpmn/lan` 应显示 Advertorial 软文，而非 404。
+
 ## 验收
 
 1. https://www.lotusscom.my/products/hybrid-pots-pans-set-12-pc — 产品页正常

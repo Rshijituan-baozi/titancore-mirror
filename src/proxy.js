@@ -6,15 +6,19 @@ import zlib from 'zlib';
 const TARGET = process.env.TARGET_URL || 'https://shop-titancore.com';
 const TARGET_ORIGIN = TARGET.replace(/\/$/, '');
 const TARGET_HOST = new URL(TARGET).host;
+const WWW_TARGET = (process.env.WWW_TARGET_URL || 'https://www.shop-titancore.com').replace(/\/$/, '');
+const WWW_TARGET_HOST = new URL(WWW_TARGET).host;
 const PUBLIC_HOST = process.env.PUBLIC_HOST || '';
 const PASSTHROUGH = process.env.CHECKOUT_PASSTHROUGH === '1' || process.env.CHECKOUT_PASSTHROUGH === 'true';
+/** Advertorial landers (e.g. /tpmn/lan) only exist on www.shop-titancore.com */
+const WWW_ONLY_PATH_RE = /^\/tpmn(?:\/|$)/i;
 
 const MAX_SOCKETS = parseInt(process.env.MAX_SOCKETS || '32', 10);
 const TIMEOUT_MS = parseInt(process.env.UPSTREAM_TIMEOUT || '120000', 10);
 
 const agent = new https.Agent({ keepAlive: true, maxSockets: MAX_SOCKETS });
 
-const TITANCORE_HOST_RE = /^shop-titancore\.com$/i;
+const TITANCORE_HOST_RE = /^(?:www\.)?shop-titancore\.com$/i;
 const TITANCORE_DOMAIN_RE = /(?:https?:)?\/\/(?:www\.)?shop-titancore\.com/gi;
 const STATIC_RE = /\.(js|mjs|css|woff2?|ttf|otf|eot|png|jpe?g|gif|svg|ico|webp|avif|map)(\?|$)/i;
 
@@ -26,8 +30,24 @@ const HOP_BY_HOP = new Set([
   'te', 'trailer', 'transfer-encoding', 'upgrade',
 ]);
 
+function pathOnly(url) {
+  return String(url || '').split('?')[0].split('#')[0];
+}
+
+function isWwwOnlyPath(url) {
+  return WWW_ONLY_PATH_RE.test(pathOnly(url));
+}
+
+function resolveUpstream(url) {
+  return isWwwOnlyPath(url) ? WWW_TARGET : TARGET_ORIGIN;
+}
+
+function resolveUpstreamHost(url) {
+  return isWwwOnlyPath(url) ? WWW_TARGET_HOST : TARGET_HOST;
+}
+
 function isCheckoutPath(path) {
-  return /^\/checkouts(?:\/|$)/i.test(String(path || '').split('?')[0]);
+  return /^\/checkouts(?:\/|$)/i.test(pathOnly(path));
 }
 
 function isCheckoutRedirectUrl(value) {
@@ -236,6 +256,9 @@ export function createTitancoreProxy() {
   return createProxyMiddleware({
     target: TARGET,
     changeOrigin: true,
+    router(req) {
+      return resolveUpstream(req.originalUrl || req.url);
+    },
     agent,
     timeout: TIMEOUT_MS,
     proxyTimeout: TIMEOUT_MS,
@@ -243,9 +266,11 @@ export function createTitancoreProxy() {
     selfHandleResponse: true,
     on: {
       proxyReq(proxyReq, req) {
-        proxyReq.setHeader('host', TARGET_HOST);
-        proxyReq.setHeader('origin', TARGET_ORIGIN);
-        proxyReq.setHeader('referer', `${TARGET_ORIGIN}/`);
+        const upstream = resolveUpstream(req.originalUrl || req.url);
+        const upstreamHost = resolveUpstreamHost(req.originalUrl || req.url);
+        proxyReq.setHeader('host', upstreamHost);
+        proxyReq.setHeader('origin', upstream);
+        proxyReq.setHeader('referer', `${upstream}/`);
       },
       proxyRes(proxyRes, req, res) {
         const status = proxyRes.statusCode || 502;
@@ -326,4 +351,13 @@ export function createTitancoreProxy() {
   });
 }
 
-export { PASSTHROUGH, isCheckoutPath, isCheckoutRedirectUrl, rewriteLocation, patchStorefrontHtml, rewriteStaticHtmlUrls };
+export {
+  PASSTHROUGH,
+  isCheckoutPath,
+  isCheckoutRedirectUrl,
+  isWwwOnlyPath,
+  resolveUpstream,
+  rewriteLocation,
+  patchStorefrontHtml,
+  rewriteStaticHtmlUrls,
+};

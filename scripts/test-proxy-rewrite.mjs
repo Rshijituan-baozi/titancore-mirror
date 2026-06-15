@@ -3,7 +3,7 @@ import { setTimeout as sleep } from 'timers/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { patchStorefrontHtml } from '../src/proxy.js';
+import { patchStorefrontHtml, isWwwOnlyPath, resolveUpstream } from '../src/proxy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -31,6 +31,10 @@ assert(/https:\/\/shop-titancore\.com\/cdn\/shop\/t\/12\/assets\/theme\.css/i.te
 assert(/https:\/\/shop-titancore\.com\/cdn\/shopifycloud\/shop-js\/loader\.js/i.test(patched), 'shopifycloud scripts should point to origin CDN');
 assert(patched.includes('Shopify.cdnHost = location.host + "/cdn"'), 'Shopify.cdnHost should use location.host');
 assert(/SameSite=Lax';\s*\}\s*\}\)\(\);<\/script>/.test(patched), 'vclid script should be closed with })();');
+assert(isWwwOnlyPath('/tpmn/lan'), '/tpmn/lan should use www upstream');
+assert(!isWwwOnlyPath('/products/hybrid-pots-pans-set-12-pc'), 'product pages should use primary upstream');
+assert(resolveUpstream('/tpmn/lan') === 'https://www.shop-titancore.com', 'tpmn should resolve to www target');
+assert(resolveUpstream('/cart') === 'https://shop-titancore.com', 'cart should resolve to primary target');
 
 const serverProc = spawn(process.execPath, ['src/index.js'], {
   cwd: ROOT,
@@ -56,6 +60,14 @@ try {
   assert(html.includes('Shopify.cdnHost = location.host + "/cdn"'), 'live HTML should patch Shopify.cdnHost');
   assert(html.includes('<base href="/">'), 'HTML should inject base tag');
   assert(html.includes('isShopifyCheckoutUrl'), 'HTML should include checkout guard');
+
+  const tpmnRes = await fetch(`${BASE}/tpmn/lan`);
+  assert(tpmnRes.ok, '/tpmn/lan should proxy via www upstream (not 404)');
+  const tpmnHtml = await tpmnRes.text();
+  assert(
+    /Shocking Reasons|Advertorial|PFAS Awareness Sale/i.test(tpmnHtml),
+    '/tpmn/lan should return advertorial landing page',
+  );
 
   const settings = await fetch(`${BASE}/api/settings`);
   assert(settings.ok, '/api/settings should return 200 from node');

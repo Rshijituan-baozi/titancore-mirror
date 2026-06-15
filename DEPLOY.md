@@ -63,6 +63,23 @@ bash deploy.sh   # 或仅配置 Nginx 段
 cd /app/titancore-mirror && git pull origin main && npm ci --omit=dev && pm2 restart titancore --update-env
 ```
 
+若只改了 `custom/checkout/*.js`（如 payment-core、tt-pixel），生产机可改用（**不需要 cheerio**）：
+
+```bash
+git pull origin main
+npm run sync:checkout
+pm2 restart titancore --update-env
+```
+
+`npm run step:5` 会重建整个 `public/checkout/index.html`，依赖 **devDependencies**（cheerio）。生产环境若只跑了 `npm ci --omit=dev`，需先：
+
+```bash
+npm install cheerio
+npm run step:5
+```
+
+或在本机跑完 step:5 再 commit（仓库里已含 `public/checkout/` 时，服务器 **git pull + restart 即可**）。
+
 ## 本地测试
 
 ```bash

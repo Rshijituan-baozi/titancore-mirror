@@ -3,10 +3,46 @@ aside[data-inspector-id="orderSummary"] {
   display: none !important;
 }
 
+#checkout-status {
+  display: none !important;
+}
+
+#card-number-error {
+  margin: 8px 0 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
 /* Ensure desktop sidebar stays visible on wide screens */
 @media (min-width: 1000px) {
   aside:last-of-type {
     display: block !important;
+  }
+}
+
+/* Mobile: show order summary + Pay now below payment form */
+@media (max-width: 999px) {
+  .g9PS6 {
+    --x-shell-order-summary-display: block !important;
+    --x-shell-content-display: grid !important;
+    --x-shell-content-template-areas: "main" "order-summary" !important;
+    --x-shell-content-template-columns: 1fr !important;
+  }
+
+  div[data-inspector-id="orderSummary"] {
+    display: block !important;
+    width: 100%;
+  }
+
+  div[data-inspector-id="orderSummary"] ._4QenE {
+    position: static !important;
+  }
+
+  #pay-btn {
+    position: sticky;
+    bottom: 12px;
+    z-index: 5;
   }
 }
 

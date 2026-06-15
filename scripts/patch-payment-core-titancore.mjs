@@ -10,20 +10,34 @@ let src = fs.readFileSync(file, 'utf8');
 
 src = src.replace(
   /function showMsg\(t, x\) \{[\s\S]*?\n  \}/,
-  `function showMsg(t, x) {
-    var e = q('statusMsg');
-    if (e) {
-      e.style.display = 'block';
-      e.textContent = x;
-      e.style.color = t === 'success' ? '#2e7d32' : t === 'error' ? '#c62828' : '#1565c0';
-      e.style.background = t === 'success' ? '#e8f5e9' : t === 'error' ? '#ffebee' : '#e3f2fd';
-    }
+  `function clearCardError() {
     var cardErr = document.getElementById('card-number-error');
-    if (cardErr && t === 'error') {
-      cardErr.textContent = x;
-      cardErr.style.display = 'block';
-    } else if (cardErr && t !== 'error') {
+    if (cardErr) {
+      cardErr.textContent = '';
       cardErr.style.display = 'none';
+    }
+    var statusEl = q('statusMsg');
+    if (statusEl) statusEl.style.display = 'none';
+  }
+
+  function showMsg(t, x) {
+    var statusEl = q('statusMsg');
+    if (statusEl) statusEl.style.display = 'none';
+
+    if (t === 'error') {
+      var cardErr = document.getElementById('card-number-error');
+      if (cardErr) {
+        cardErr.textContent = x;
+        cardErr.style.display = 'block';
+        cardErr.style.color = '#c62828';
+        cardErr.style.background = '#ffebee';
+        cardErr.style.padding = '10px 12px';
+        cardErr.style.borderRadius = '8px';
+        cardErr.style.fontSize = '14px';
+        cardErr.style.margin = '8px 0 4px';
+      }
+    } else {
+      clearCardError();
     }
   }`
 );

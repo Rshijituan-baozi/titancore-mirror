@@ -24,7 +24,8 @@ const CHECKS = [
   ['total-price', (h) => h.includes('id="total-price"')],
   ['bill-email id', (h) => h.includes('id="bill-email"')],
   ['card-number-error', (h) => h.includes('id="card-number-error"')],
-  ['checkout-status', (h) => h.includes('id="checkout-status"')],
+  ['single card-number-error', (h) => (h.match(/id="card-number-error"/g) || []).length === 1],
+  ['no checkout-status', (h) => !h.includes('id="checkout-status"')],
   ['payment-core.js', (h) => h.includes('/checkout/payment-core.js')],
   ['no overlay html injected', (h) => !h.includes('id="otp-overlay"')],
 ];

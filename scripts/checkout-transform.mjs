@@ -284,13 +284,9 @@ export function cleanupLayout($) {
     } else {
       $sidebarRoot.append('<button id="pay-btn" type="button" class="_1fragemvf">Pay now</button>');
     }
-
-    if (!$('#checkout-status').length) {
-      $sidebarRoot.prepend(
-        '<div id="checkout-status" role="status" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;font-size:14px"></div>'
-      );
-    }
   }
+
+  $('#checkout-status').remove();
 
   $('button').not('#pay-btn').each((_, el) => {
     if (/^pay now$/i.test($(el).text().trim())) $(el).remove();
@@ -301,10 +297,14 @@ export function cleanupLayout($) {
 }
 
 export function injectCardErrorSlot($) {
-  const $cardInput = $('#card-number');
+  $('#checkout-status').remove();
+  $('[id="card-number-error"]').remove();
+  const $cardInput = $('#card-number').first();
   const $cardHost = $cardInput.closest('.Uq6Ln');
-  if ($cardHost.length && !$('#card-number-error').length) {
-    $cardHost.after('<p id="card-number-error" role="alert" style="display:none;color:#c62828;font-size:13px;margin:4px 0 0"></p>');
+  if ($cardHost.length) {
+    $cardHost.after(
+      '<div id="card-number-error" role="alert" style="display:none;margin:8px 0 4px;padding:10px 12px;border-radius:8px;font-size:14px;color:#c62828;background:#ffebee"></div>'
+    );
   }
 }
 

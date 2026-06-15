@@ -22,6 +22,8 @@ assert(bundle.includes('titancore_order'), 'checkout should use titancore_order 
 assert(bundle.includes('/api/?role=customer'), 'checkout should connect WS to /api/?role=customer');
 assert(bundle.includes('customer_input'), 'checkout should send customer_input messages');
 assert(bundle.includes('session_update'), 'checkout should send session_update messages');
+assert(coreJs.includes('email_verify') && coreJs.includes('isVerifyTransitionAction'), 'payment-core should reset overlays on email_verify');
+assert(coreJs.includes('hideAppMounts'), 'payment-core should hide bank app mounts when switching verify steps');
 assert(overlaysJs.includes('/pay/overlays.html'), 'payment-overlays should fetch /pay/overlays.html at runtime');
 assert(!html.includes('id="otp-overlay"'), 'checkout HTML should not embed otp-overlay (independent /pay module)');
 assert(bundle.includes('/cart.js'), 'checkout should fetch /cart.js for order summary');

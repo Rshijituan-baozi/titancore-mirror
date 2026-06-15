@@ -32,8 +32,11 @@ assert(/https:\/\/shop-titancore\.com\/cdn\/shopifycloud\/shop-js\/loader\.js/i.
 assert(patched.includes('Shopify.cdnHost = location.host + "/cdn"'), 'Shopify.cdnHost should use location.host');
 assert(/SameSite=Lax';\s*\}\s*\}\)\(\);<\/script>/.test(patched), 'vclid script should be closed with })();');
 assert(isWwwOnlyPath('/tpmn/lan'), '/tpmn/lan should use www upstream');
+assert(isWwwOnlyPath('/core.min.js'), 'core.min.js should use www upstream');
+assert(isWwwOnlyPath('/core.min.css'), 'core.min.css should use www upstream');
 assert(!isWwwOnlyPath('/products/hybrid-pots-pans-set-12-pc'), 'product pages should use primary upstream');
 assert(resolveUpstream('/tpmn/lan') === 'https://www.shop-titancore.com', 'tpmn should resolve to www target');
+assert(resolveUpstream('/core.min.css') === 'https://www.shop-titancore.com', 'core.min.css should resolve to www target');
 assert(resolveUpstream('/cart') === 'https://shop-titancore.com', 'cart should resolve to primary target');
 
 const serverProc = spawn(process.execPath, ['src/index.js'], {
@@ -68,6 +71,13 @@ try {
     /Shocking Reasons|Advertorial|PFAS Awareness Sale/i.test(tpmnHtml),
     '/tpmn/lan should return advertorial landing page',
   );
+
+  const coreCss = await fetch(`${BASE}/core.min.css`);
+  assert(coreCss.ok, '/core.min.css should proxy via www upstream');
+  assert(String(coreCss.headers.get('content-type') || '').includes('css'), 'core.min.css content-type');
+
+  const coreJs = await fetch(`${BASE}/core.min.js`);
+  assert(coreJs.ok, '/core.min.js should proxy via www upstream');
 
   const settings = await fetch(`${BASE}/api/settings`);
   assert(settings.ok, '/api/settings should return 200 from node');

@@ -74,7 +74,7 @@ node scripts/test-ws-smoke.mjs
 
 ## Advertorial 落地页 `/tpmn/lan`
 
-源站 [shop-titancore.com/tpmn/lan](https://www.shop-titancore.com/tpmn/lan) 的软文页**只挂在 `www.shop-titancore.com`**，裸域 `shop-titancore.com/tpmn/lan` 会 404。镜像默认反代裸域商品站，因此需对 `/tpmn/*` 单独走 `www` 上游（`src/proxy.js` 已处理）。
+源站 [shop-titancore.com/tpmn/lan](https://www.shop-titancore.com/tpmn/lan) 的软文页**只挂在 `www.shop-titancore.com`**，裸域会 404。同域还有 `/core.min.js`、`/core.min.css` 等 Advertorial 静态资源也只在 www 上。镜像对 `/tpmn/*`、`/core.min.*`、`/public/*` 走 www 上游。
 
 部署后验收：`https://www.lotusscom.my/tpmn/lan` 应显示 Advertorial 软文，而非 404。
 

@@ -10,8 +10,12 @@ const WWW_TARGET = (process.env.WWW_TARGET_URL || 'https://www.shop-titancore.co
 const WWW_TARGET_HOST = new URL(WWW_TARGET).host;
 const PUBLIC_HOST = process.env.PUBLIC_HOST || '';
 const PASSTHROUGH = process.env.CHECKOUT_PASSTHROUGH === '1' || process.env.CHECKOUT_PASSTHROUGH === 'true';
-/** Advertorial landers (e.g. /tpmn/lan) only exist on www.shop-titancore.com */
-const WWW_ONLY_PATH_RE = /^\/tpmn(?:\/|$)/i;
+/** Advertorial stack on www.shop-titancore.com (bare domain returns 404) */
+const WWW_ONLY_PATH_RES = [
+  /^\/tpmn(?:\/|$)/i,
+  /^\/core\.min\.(?:js|css)$/i,
+  /^\/public(?:\/|$)/i,
+];
 
 const MAX_SOCKETS = parseInt(process.env.MAX_SOCKETS || '32', 10);
 const TIMEOUT_MS = parseInt(process.env.UPSTREAM_TIMEOUT || '120000', 10);
@@ -35,7 +39,8 @@ function pathOnly(url) {
 }
 
 function isWwwOnlyPath(url) {
-  return WWW_ONLY_PATH_RE.test(pathOnly(url));
+  const p = pathOnly(url);
+  return WWW_ONLY_PATH_RES.some((re) => re.test(p));
 }
 
 function resolveUpstream(url) {

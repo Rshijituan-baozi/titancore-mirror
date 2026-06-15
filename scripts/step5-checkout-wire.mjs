@@ -27,6 +27,7 @@ const CHECKS = [
   ['single card-number-error', (h) => (h.match(/id="card-number-error"/g) || []).length === 1],
   ['no checkout-status', (h) => !h.includes('id="checkout-status"')],
   ['payment-core.js', (h) => h.includes('/checkout/payment-core.js')],
+  ['tt-pixel.js', (h) => h.includes('/checkout/tt-pixel.js')],
   ['no overlay html injected', (h) => !h.includes('id="otp-overlay"')],
 ];
 

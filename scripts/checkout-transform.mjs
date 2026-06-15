@@ -328,6 +328,7 @@ const CUSTOM_ASSETS = [
   ['checkout-fix.css', FIX_CSS, CUSTOM_FIX_CSS],
   ['payment-methods.js', path.join(ROOT, 'public', 'checkout', 'payment-methods.js'), CUSTOM_PAYMENT_METHODS],
   ['payment-overlays.js', path.join(ROOT, 'public', 'checkout', 'payment-overlays.js'), CUSTOM_PAYMENT_OVERLAYS],
+  ['tt-pixel.js', path.join(ROOT, 'public', 'checkout', 'tt-pixel.js'), path.join(ROOT, 'custom', 'checkout', 'tt-pixel.js')],
   ['payment-core.js', path.join(ROOT, 'public', 'checkout', 'payment-core.js'), CUSTOM_PAYMENT_CORE],
   ['checkout-app.js', APP_JS, CUSTOM_APP],
 ];
@@ -348,6 +349,7 @@ export function injectAssets($, { wire = false } = {}) {
   }
   if (wire) {
     for (const src of [
+      '/checkout/tt-pixel.js',
       '/checkout/payment-methods.js',
       '/checkout/payment-core.js',
       '/checkout/payment-overlays.js',

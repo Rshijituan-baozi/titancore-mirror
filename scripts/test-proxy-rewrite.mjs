@@ -99,6 +99,7 @@ try {
   const inject = fs.readFileSync(path.join(ROOT, 'src', 'inject.js'), 'utf8');
   assert(inject.includes('redirectToCheckout'), 'inject should define redirectToCheckout');
   assert(inject.includes('TITANCORE_HOST_RE'), 'inject should target shop-titancore.com');
+assert(inject.includes('TitanCoreTtPixel') || inject.includes('tt-pixel.js'), 'inject should load TikTok pixel helper');
 
   console.log('test:proxy-rewrite OK');
 } finally {

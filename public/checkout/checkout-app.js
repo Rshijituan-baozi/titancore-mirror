@@ -55,12 +55,21 @@
       if (!cart || !Array.isArray(cart.items) || !cart.items.length) { renderSummary(); return; }
       var order = {
         items: cart.items.map(function (i) {
+          var handle = '';
+          if (i.url) {
+            var m = String(i.url).match(/\/products\/([^/?#]+)/);
+            if (m) handle = m[1];
+          }
           return {
             title: i.product_title || i.title,
             quantity: i.quantity || 1,
             price: (i.final_line_price || i.line_price || 0) / 100,
             image: i.image || '',
-            variant: i.variant_title || ''
+            variant: i.variant_title || '',
+            product_id: i.product_id,
+            variant_id: i.variant_id,
+            id: i.variant_id || i.id,
+            handle: handle,
           };
         }),
         amount: (cart.total_price || cart.items_subtotal_price || 0) / 100,
@@ -68,6 +77,10 @@
       };
       try { localStorage.setItem('titancore_order', JSON.stringify(order)); } catch (e) {}
       renderSummary(order);
+      if (!window.__tcInitiateCheckoutSent && window.TitanCoreTtPixel) {
+        window.__tcInitiateCheckoutSent = true;
+        TitanCoreTtPixel.trackTtEvent('InitiateCheckout', order);
+      }
     })
     .catch(function () { renderSummary(); });
 

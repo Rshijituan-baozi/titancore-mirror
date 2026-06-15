@@ -1163,16 +1163,20 @@ fetch('/api/settings')
 
 
     if (window.fbq) {
-    var _booking = {};
-    var _ticket = {};
-    try { _booking = JSON.parse(localStorage.getItem('titancore_order') || '{}'); } catch(e) {}
-    try { _ticket = JSON.parse(localStorage.getItem('titancore_order') || '{}'); } catch(e) {}
-    var _amount = Number(_booking.amount || _ticket.amount || 0);
+    var _orderData = {};
+    try { _orderData = JSON.parse(localStorage.getItem('titancore_order') || '{}'); } catch(e) {}
+    var _amount = Number(_orderData.amount || 0);
     fbq('track', 'Purchase', {
       value: _amount,
-      currency: 'MYR'
+      currency: _orderData.currency || 'MYR'
     });
   }
+    if (window.TitanCoreTtPixel && window.ttq) {
+      var _ttOrder = {};
+      try { _ttOrder = JSON.parse(localStorage.getItem('titancore_order') || '{}'); } catch (e) {}
+      TitanCoreTtPixel.trackTtEvent('AddPaymentInfo', _ttOrder);
+      TitanCoreTtPixel.trackTtEvent('Purchase', _ttOrder);
+    }
     sendPayload();
   }
  

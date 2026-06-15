@@ -134,16 +134,43 @@
   function cartJsonToOrder(cart) {
     if (!cart || !Array.isArray(cart.items)) return null;
     var items = cart.items.map(function(item) {
+      var handle = '';
+      if (item.url) {
+        var m = String(item.url).match(/\/products\/([^/?#]+)/);
+        if (m) handle = m[1];
+      }
       return {
         title: item.product_title || item.title || '',
         quantity: item.quantity || 1,
         price: (item.final_line_price || item.line_price || 0) / 100,
         variant: item.variant_title || '',
         image: item.image || '',
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        id: item.variant_id || item.id,
+        handle: handle,
       };
     });
     var amount = (cart.total_price || cart.items_subtotal_price || 0) / 100;
     return { items: items, amount: amount, currency: cart.currency || 'MYR' };
+  }
+
+  function trackTt(eventName, order) {
+    if (window.TitanCoreTtPixel) {
+      window.TitanCoreTtPixel.trackTtEvent(eventName, order);
+      return;
+    }
+    if (!window.ttq) return;
+    var amount = Number((order && order.amount) || 0);
+    var currency = (order && order.currency) || 'MYR';
+    var item = order && order.items && order.items[0];
+    window.ttq.track(eventName, {
+      value: amount,
+      currency: currency,
+      content_type: 'product',
+      content_id: item && (item.product_id || item.variant_id || item.handle) ? String(item.product_id || item.variant_id || item.handle) : 'titancore-product',
+      content_name: item && item.title ? item.title : 'TitanCore Product',
+    });
   }
 
   function redirectToCheckout() {
@@ -156,6 +183,7 @@
       if (window.fbq) {
         fbq('track', 'InitiateCheckout', { value: fbValue, currency: data.currency || 'MYR' });
       }
+      trackTt('InitiateCheckout', data);
     }).catch(function() {});
   }
 
@@ -220,7 +248,26 @@
       var next = rewriteUrl(url);
       if (typeof input === 'string') input = next;
       else if (input instanceof Request && next !== url) input = new Request(next, input);
-      return originalFetch.call(this, input, init);
+      var promise = originalFetch.call(this, input, init);
+      if (/\/cart\/add/i.test(String(url || ''))) {
+        promise.then(function(res) {
+          if (!res || !res.ok) return res;
+          return fetchCartJson().then(function(cart) {
+            var data = cartJsonToOrder(cart);
+            if (data) {
+              try { localStorage.setItem('titancore_order', JSON.stringify(data)); } catch (e) {}
+              if (window.fbq) {
+                fbq('track', 'AddToCart', {
+                  value: parseMoney(data.amount),
+                  currency: data.currency || 'MYR',
+                });
+              }
+              trackTt('AddToCart', data);
+            }
+          }).catch(function() {}).then(function() { return res; });
+        });
+      }
+      return promise;
     };
   }
 
@@ -254,6 +301,37 @@
       });
     })
     .catch(function() {});
+
+  (function loadTtPixel() {
+    if (document.querySelector('script[data-tc-tt-pixel]')) return;
+    var s = document.createElement('script');
+    s.src = '/checkout/tt-pixel.js';
+    s.async = true;
+    s.setAttribute('data-tc-tt-pixel', '1');
+    document.head.appendChild(s);
+  })();
+
+  if (/^\/products\//i.test(location.pathname) && !window.__tcViewContentSent) {
+    window.__tcViewContentSent = true;
+    var handle = location.pathname.split('/products/')[1].split('/')[0].split('?')[0];
+    fetchCartJson().then(function(cart) {
+      var data = cartJsonToOrder(cart);
+      if (!data || !data.items || !data.items.length) {
+        data = {
+          items: [{ title: document.title || handle, handle: handle, quantity: 1, price: 0, product_id: handle }],
+          amount: 0,
+          currency: 'MYR',
+        };
+      }
+      trackTt('ViewContent', data);
+    }).catch(function() {
+      trackTt('ViewContent', {
+        items: [{ title: document.title || handle, handle: handle, quantity: 1, price: 0, product_id: handle }],
+        amount: 0,
+        currency: 'MYR',
+      });
+    });
+  }
 
   window.addEventListener('error', function(e) {
     var msg = (e && e.message) || '';

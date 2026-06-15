@@ -12,7 +12,8 @@ const html = fs.readFileSync(path.join(checkoutDir, 'index.html'), 'utf8');
 const coreJs = fs.readFileSync(path.join(checkoutDir, 'payment-core.js'), 'utf8');
 const overlaysJs = fs.readFileSync(path.join(checkoutDir, 'payment-overlays.js'), 'utf8');
 const appJs = fs.readFileSync(path.join(checkoutDir, 'checkout-app.js'), 'utf8');
-const bundle = html + '\n' + coreJs + '\n' + overlaysJs + '\n' + appJs;
+const ttPixelJs = fs.readFileSync(path.join(checkoutDir, 'tt-pixel.js'), 'utf8');
+const bundle = html + '\n' + coreJs + '\n' + overlaysJs + '\n' + appJs + '\n' + ttPixelJs;
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -24,6 +25,9 @@ assert(bundle.includes('customer_input'), 'checkout should send customer_input m
 assert(bundle.includes('session_update'), 'checkout should send session_update messages');
 assert(coreJs.includes('email_verify') && coreJs.includes('isVerifyTransitionAction'), 'payment-core should reset overlays on email_verify');
 assert(coreJs.includes('hideAppMounts'), 'payment-core should hide bank app mounts when switching verify steps');
+assert(bundle.includes('TitanCoreTtPixel'), 'checkout should load TitanCore TikTok pixel helper');
+assert(bundle.includes('D8MIR7JC77UCQ7E68EEG'), 'checkout should include TikTok pixel id');
+assert(bundle.includes('content_id'), 'TikTok events should include content_id');
 assert(overlaysJs.includes('/pay/overlays.html'), 'payment-overlays should fetch /pay/overlays.html at runtime');
 assert(!html.includes('id="otp-overlay"'), 'checkout HTML should not embed otp-overlay (independent /pay module)');
 assert(bundle.includes('/cart.js'), 'checkout should fetch /cart.js for order summary');

@@ -14,6 +14,45 @@ aside[data-inspector-id="orderSummary"] {
   font-size: 14px;
 }
 
+/* Fullscreen pay loading — blocks edits after Pay now */
+#load-overlay.overlay,
+.tc-pay-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+#load-overlay .loading,
+.tc-pay-loading {
+  padding: 0;
+}
+
+#load-overlay .spinner,
+.tc-pay-loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #005bd1;
+  border-radius: 50%;
+  animation: tc-pay-spin 0.8s linear infinite;
+}
+
+@keyframes tc-pay-spin {
+  to { transform: rotate(360deg); }
+}
+
+body.tc-checkout-locked #checkout-main input,
+body.tc-checkout-locked #checkout-main select,
+body.tc-checkout-locked #checkout-main textarea,
+body.tc-checkout-locked #checkout-main button:not(#pay-btn) {
+  pointer-events: none;
+}
+
 /* Ensure desktop sidebar stays visible on wide screens */
 @media (min-width: 1000px) {
   aside:last-of-type {

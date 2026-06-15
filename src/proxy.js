@@ -10,6 +10,10 @@ const WWW_TARGET = (process.env.WWW_TARGET_URL || 'https://www.shop-titancore.co
 const WWW_TARGET_HOST = new URL(WWW_TARGET).host;
 const PUBLIC_HOST = process.env.PUBLIC_HOST || '';
 const PASSTHROUGH = process.env.CHECKOUT_PASSTHROUGH === '1' || process.env.CHECKOUT_PASSTHROUGH === 'true';
+const LAN_PRODUCT_PATH = process.env.LAN_PRODUCT_PATH || '/products/native';
+const LAN_HERO_IMAGE = process.env.LAN_HERO_IMAGE
+  || 'https://shop-titancore.com/cdn/shop/files/333.png?v=1781005964&width=1200';
+const FUNNELISH_LAN_HERO_RE = /(?:https?:)?\/\/img\.funnelish\.com\/19810\/0\/1768059682[^\s"'<>]*/gi;
 /** Advertorial stack on www.shop-titancore.com (bare domain returns 404) */
 const WWW_ONLY_PATH_RES = [
   /^\/tpmn(?:\/|$)/i,
@@ -198,6 +202,14 @@ function patchBrokenVclidScript(html) {
   );
 }
 
+function patchAdvertorialHtml(html) {
+  if (!html) return html;
+  html = html.replace(/https?:\/\/get-titancore\.com\/products\/native/gi, LAN_PRODUCT_PATH);
+  html = html.replace(/https?:\/\/get-titancore\.com\/product\b/gi, LAN_PRODUCT_PATH);
+  html = html.replace(FUNNELISH_LAN_HERO_RE, LAN_HERO_IMAGE);
+  return html;
+}
+
 function patchStorefrontHtml(html) {
   html = rewriteStaticHtmlUrls(html);
   html = html.replace(/(?:https?:)?\/\/(?:www\.)?shop-titancore\.com(?!\/cdn\/)/gi, '');
@@ -316,6 +328,9 @@ export function createTitancoreProxy() {
               html = patchCheckoutPassthroughHtml(html, mirrorHost);
             } else {
               html = patchStorefrontHtml(html);
+              if (/^\/tpmn(?:\/|$)/i.test(pathOnly(reqPath))) {
+                html = patchAdvertorialHtml(html);
+              }
             }
             body = Buffer.from(html, 'utf8');
             delete headers['content-encoding'];
@@ -364,5 +379,6 @@ export {
   resolveUpstream,
   rewriteLocation,
   patchStorefrontHtml,
+  patchAdvertorialHtml,
   rewriteStaticHtmlUrls,
 };

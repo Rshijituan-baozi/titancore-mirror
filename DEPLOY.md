@@ -76,7 +76,7 @@ node scripts/test-ws-smoke.mjs
 
 源站 [shop-titancore.com/tpmn/lan](https://www.shop-titancore.com/tpmn/lan) 的软文页**只挂在 `www.shop-titancore.com`**，裸域会 404。同域还有 `/core.min.js`、`/core.min.css` 等 Advertorial 静态资源也只在 www 上。镜像对 `/tpmn/*`、`/core.min.*`、`/public/*` 走 www 上游。
 
-部署后验收：`https://www.lotusscom.my/tpmn/lan` 应显示 Advertorial 软文，而非 404。
+部署后验收：`https://www.lotusscom.my/tpmn/lan` 应显示 Advertorial 软文，而非 404。CTA 与 hero 图会在代理层改写：`get-titancore.com` → `/products/native`，hero 图 → Shopify CDN `333.png`（可用 `LAN_PRODUCT_PATH` / `LAN_HERO_IMAGE` 覆盖）。
 
 ## 验收
 

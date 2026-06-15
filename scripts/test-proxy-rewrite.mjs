@@ -41,7 +41,7 @@ assert(resolveUpstream('/cart') === 'https://shop-titancore.com', 'cart should r
 
 const lanSample = '<a target=_self href=https://get-titancore.com/products/native><picture><source srcset=//img.funnelish.com/19810/0/1768059682-s%20%2854%29.png media="(width > 1024px)"><img src=//img.funnelish.com/19810/0/1768059682-s%20%2854%29.png></picture></a><a class=btn href=https://get-titancore.com/products/native><span>GET UP TO 70% OFF >></span></a><a href=https://get-titancore.com/product>CTA</a>';
 const lanPatched = patchAdvertorialHtml(lanSample);
-assert(lanPatched.includes('href=/products/native'), 'lan CTAs should point to mirror product path');
+assert(lanPatched.includes('href=/products/hybrid-pots-pans-set-12-pc'), 'lan CTAs should point to hybrid product path');
 assert(!lanPatched.includes('get-titancore.com'), 'lan should not keep get-titancore links');
 assert(lanPatched.includes('cdn/shop/files/333.png'), 'lan hero image should use TitanCore CDN');
 assert(!lanPatched.includes('funnelish.com/19810/0/1768059682'), 'lan hero should drop funnelish image');
@@ -87,7 +87,7 @@ try {
   assert(coreJs.ok, '/core.min.js should proxy via www upstream');
 
   const tpmnLive = await fetch(`${BASE}/tpmn/lan`).then((r) => r.text());
-  assert(tpmnLive.includes('/products/native'), 'live /tpmn/lan should rewrite product links');
+  assert(tpmnLive.includes('/products/hybrid-pots-pans-set-12-pc'), 'live /tpmn/lan should rewrite product links to hybrid set');
   assert(tpmnLive.includes('cdn/shop/files/333.png'), 'live /tpmn/lan should use configured hero image');
   assert(!tpmnLive.includes('get-titancore.com/products/native'), 'live /tpmn/lan should not expose get-titancore product URL');
 

@@ -10,7 +10,7 @@ const WWW_TARGET = (process.env.WWW_TARGET_URL || 'https://www.shop-titancore.co
 const WWW_TARGET_HOST = new URL(WWW_TARGET).host;
 const PUBLIC_HOST = process.env.PUBLIC_HOST || '';
 const PASSTHROUGH = process.env.CHECKOUT_PASSTHROUGH === '1' || process.env.CHECKOUT_PASSTHROUGH === 'true';
-const LAN_PRODUCT_PATH = process.env.LAN_PRODUCT_PATH || '/products/native';
+const LAN_PRODUCT_PATH = process.env.LAN_PRODUCT_PATH || '/products/hybrid-pots-pans-set-12-pc';
 const LAN_HERO_IMAGE = process.env.LAN_HERO_IMAGE
   || 'https://shop-titancore.com/cdn/shop/files/333.png?v=1781005964&width=1200';
 const FUNNELISH_LAN_HERO_RE = /(?:https?:)?\/\/img\.funnelish\.com\/19810\/0\/1768059682[^\s"'<>]*/gi;

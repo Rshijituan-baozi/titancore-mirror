@@ -272,7 +272,8 @@ function decodeBody(buffer, encoding) {
 export function createTitancoreProxy() {
   return createProxyMiddleware({
     target: TARGET,
-    changeOrigin: false,
+    // changeOrigin sets upstream Host from router target; do not duplicate in proxyReq (ERR_HTTP_HEADERS_SENT).
+    changeOrigin: true,
     router(req) {
       return resolveUpstream(req.originalUrl || req.url);
     },
@@ -284,12 +285,8 @@ export function createTitancoreProxy() {
     on: {
       proxyReq(proxyReq, req) {
         try {
-          if (proxyReq.headersSent || proxyReq._headerSent) return;
           const reqUrl = req.originalUrl || req.url || '';
           const upstream = resolveUpstream(reqUrl);
-          const upstreamHost = resolveUpstreamHost(reqUrl);
-          proxyReq.setHeader('host', upstreamHost);
-          proxyReq.setHeader('origin', upstream);
           proxyReq.setHeader('referer', `${upstream}/`);
         } catch (err) {
           if (err && err.code !== 'ERR_HTTP_HEADERS_SENT') {

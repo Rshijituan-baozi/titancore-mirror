@@ -30,25 +30,18 @@ ADMIN_API_BASE=http://127.0.0.1:9528
 
 完成后 **Purge Cache**。
 
-### 2. Nginx（只保留 titancore.my）
+### 2. Nginx（只保留 titancore.my）— 一键命令
 
 ```bash
-sudo nano /etc/nginx/sites-available/titancore
+cd /app/titancore-mirror
+git pull origin main
+sudo bash scripts/switch-nginx-domain.sh
 ```
 
-```nginx
-server_name titancore.my www.titancore.my;
-```
+或一行 sed（不拉代码时）：
 
 ```bash
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-或：
-
-```bash
-cd /app/titancore-mirror && git pull origin main
-sudo DOMAIN=titancore.my PUBLIC_HOST=www.titancore.my bash deploy.sh
+sudo sed -i 's/^\s*server_name .*;/    server_name titancore.my www.titancore.my;/' /etc/nginx/sites-available/titancore && sudo nginx -t && sudo systemctl reload nginx
 ```
 
 ### 3. .env + 重启

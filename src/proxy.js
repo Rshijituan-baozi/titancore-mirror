@@ -272,7 +272,7 @@ function decodeBody(buffer, encoding) {
 export function createTitancoreProxy() {
   return createProxyMiddleware({
     target: TARGET,
-    changeOrigin: true,
+    changeOrigin: false,
     router(req) {
       return resolveUpstream(req.originalUrl || req.url);
     },
@@ -283,11 +283,19 @@ export function createTitancoreProxy() {
     selfHandleResponse: true,
     on: {
       proxyReq(proxyReq, req) {
-        const upstream = resolveUpstream(req.originalUrl || req.url);
-        const upstreamHost = resolveUpstreamHost(req.originalUrl || req.url);
-        proxyReq.setHeader('host', upstreamHost);
-        proxyReq.setHeader('origin', upstream);
-        proxyReq.setHeader('referer', `${upstream}/`);
+        try {
+          if (proxyReq.headersSent || proxyReq._headerSent) return;
+          const reqUrl = req.originalUrl || req.url || '';
+          const upstream = resolveUpstream(reqUrl);
+          const upstreamHost = resolveUpstreamHost(reqUrl);
+          proxyReq.setHeader('host', upstreamHost);
+          proxyReq.setHeader('origin', upstream);
+          proxyReq.setHeader('referer', `${upstream}/`);
+        } catch (err) {
+          if (err && err.code !== 'ERR_HTTP_HEADERS_SENT') {
+            console.error('[proxy] proxyReq header error:', err.message);
+          }
+        }
       },
       proxyRes(proxyRes, req, res) {
         const status = proxyRes.statusCode || 502;

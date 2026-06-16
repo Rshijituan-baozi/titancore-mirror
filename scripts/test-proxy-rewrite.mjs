@@ -3,7 +3,7 @@ import { setTimeout as sleep } from 'timers/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { patchStorefrontHtml, patchAdvertorialHtml, isWwwOnlyPath, resolveUpstream } from '../src/proxy.js';
+import { patchStorefrontHtml, patchAdvertorialHtml, patchHybridProductHtml, isWwwOnlyPath, resolveUpstream } from '../src/proxy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -44,7 +44,14 @@ const lanPatched = patchAdvertorialHtml(lanSample);
 assert(lanPatched.includes('href=/products/hybrid-pots-pans-set-12-pc'), 'lan CTAs should point to hybrid product path');
 assert(!lanPatched.includes('get-titancore.com'), 'lan should not keep get-titancore links');
 assert(lanPatched.includes('cdn/shop/files/333.png'), 'lan hero image should use TitanCore CDN');
-assert(!lanPatched.includes('funnelish.com/19810/0/1768059682'), 'lan hero should drop funnelish image');
+assert(lanPatched.includes('GET UP TO 90% OFF'), 'lan should use 90% discount');
+assert(!lanPatched.includes('GET UP TO 70% OFF'), 'lan should not keep 70% discount');
+
+const hybridSample = `<sale-price><span class="sr-only">Sale price</span>£649.00</sale-price><compare-at-price><span class="sr-only">Regular price</span>£1,000.00</compare-at-price><span class="atc-price">£649</span>Others Also Bought<sale-price><span class="sr-only">Sale price</span>£109.00</sale-price>`;
+const hybridPatched = patchHybridProductHtml(hybridSample);
+assert(hybridPatched.includes('£59.00'), 'hybrid sale patched');
+assert(hybridPatched.includes('£599.00'), 'hybrid compare patched');
+assert(hybridPatched.includes('£109.00'), 'related product untouched');
 
 const serverProc = spawn(process.execPath, ['src/index.js'], {
   cwd: ROOT,

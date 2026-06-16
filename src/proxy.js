@@ -11,6 +11,10 @@ const WWW_TARGET_HOST = new URL(WWW_TARGET).host;
 const PUBLIC_HOST = process.env.PUBLIC_HOST || '';
 const PASSTHROUGH = process.env.CHECKOUT_PASSTHROUGH === '1' || process.env.CHECKOUT_PASSTHROUGH === 'true';
 const LAN_PRODUCT_PATH = process.env.LAN_PRODUCT_PATH || '/products/hybrid-pots-pans-set-12-pc';
+const HYBRID_PRODUCT_ID = process.env.HYBRID_PRODUCT_ID || '10243503948114';
+const HYBRID_VARIANT_ID = process.env.HYBRID_VARIANT_ID || '51424074957138';
+const HYBRID_SALE_PRICE = parseInt(process.env.HYBRID_SALE_PRICE || '59', 10);
+const HYBRID_COMPARE_PRICE = parseInt(process.env.HYBRID_COMPARE_PRICE || '599', 10);
 const LAN_HERO_IMAGE = process.env.LAN_HERO_IMAGE
   || 'https://shop-titancore.com/cdn/shop/files/333.png?v=1781005964&width=1200';
 const FUNNELISH_LAN_HERO_RE = /(?:https?:)?\/\/img\.funnelish\.com\/19810\/0\/1768059682[^\s"'<>]*/gi;
@@ -202,11 +206,140 @@ function patchBrokenVclidScript(html) {
   );
 }
 
+/** Keep currency symbol / suffix from upstream template (e.g. RM3,913.00 MYR → RM59.00 MYR). */
+function formatMoneyLikeTemplate(amount, template) {
+  const sample = String(template || '').trim();
+  const m = sample.match(/^([^\d]*)([\d,]+(?:\.\d+)?)(.*)$/);
+  if (!m) return String(amount);
+  const [, prefix, numPart, suffix] = m;
+  const decimals = (numPart.split('.')[1] || '').length;
+  const useComma = numPart.includes(',');
+  let formatted = decimals > 0 ? amount.toFixed(decimals) : String(Math.round(amount));
+  if (useComma) {
+    const [intPart, decPart] = formatted.split('.');
+    formatted = Number(intPart).toLocaleString('en-US') + (decPart !== undefined ? `.${decPart}` : '');
+  }
+  return `${prefix}${formatted}${suffix}`;
+}
+
+function patchSalePriceTags(html, salePrice) {
+  return html.replace(
+    /(<sale-price\b[^>]*>\s*<span class="sr-only">Sale price<\/span>)([^<]+)(<\/sale-price>)/gi,
+    (_, pre, old, post) => `${pre}${formatMoneyLikeTemplate(salePrice, old)}${post}`,
+  );
+}
+
+function patchComparePriceTags(html, comparePrice) {
+  return html.replace(
+    /(<compare-at-price\b[^>]*>\s*<span class="sr-only">Regular price<\/span>)([^<]+)(<\/compare-at-price>)/gi,
+    (_, pre, old, post) => `${pre}${formatMoneyLikeTemplate(comparePrice, old)}${post}`,
+  );
+}
+
+function patchAtcPriceTags(html, salePrice) {
+  return html.replace(
+    /(<span class="atc-price">)([^<]+)(<\/span>)/gi,
+    (_, pre, old, post) => `${pre}${formatMoneyLikeTemplate(salePrice, old)}${post}`,
+  );
+}
+
+function findHybridMainSectionEnd(html) {
+  const markers = ['Others Also Bought', 'product-recommendations'];
+  let end = html.length;
+  for (const marker of markers) {
+    const idx = html.indexOf(marker);
+    if (idx > 0 && idx < end) end = idx;
+  }
+  return end;
+}
+
+function patchHybridProductJson(html, salePrice, comparePrice) {
+  const saleCents = salePrice * 100;
+  const compareCents = comparePrice * 100;
+  const saleStr = salePrice.toFixed(2);
+  const compareStr = comparePrice.toFixed(2);
+
+  const upstreamSaleCents = [651400, 64900, 391300];
+  const upstreamCompareCents = [892200, 100000, 536000];
+  for (const cents of upstreamSaleCents) {
+    html = html.replace(new RegExp(`"price":\\s*${cents}\\b`, 'g'), `"price":${saleCents}`);
+  }
+  for (const cents of upstreamCompareCents) {
+    html = html.replace(new RegExp(`"compareAtPrice":\\s*${cents}\\b`, 'g'), `"compareAtPrice":${compareCents}`);
+    html = html.replace(new RegExp(`"compare_at_price":\\s*${cents}\\b`, 'g'), `"compare_at_price":${compareCents}`);
+  }
+
+  const amountSale = [
+    [6514.0, salePrice], [649.0, salePrice], [3913.0, salePrice],
+  ];
+  const amountCompare = [
+    [8922.0, comparePrice], [1000.0, comparePrice], [5360.0, comparePrice],
+  ];
+  for (const [from, to] of amountSale) {
+    html = html.replace(new RegExp(`"amount":${from}\\b`, 'g'), `"amount":${to}.0`);
+  }
+  for (const [from, to] of amountCompare) {
+    html = html.replace(new RegExp(`"amount":${from}\\b`, 'g'), `"amount":${to}.0`);
+  }
+
+  const strSale = ['6514.00', '649.00', '3913.00'];
+  const strCompare = ['8922.00', '1000.00', '5360.00'];
+  for (const from of strSale) {
+    html = html.replace(new RegExp(`"price":"${from}"`, 'g'), `"price":"${saleStr}"`);
+  }
+  for (const from of strCompare) {
+    html = html.replace(new RegExp(`"price":"${from}"`, 'g'), `"price":"${compareStr}"`);
+  }
+
+  html = html.replace(
+    new RegExp(`("price"\\s*:\\s*")([\\d,.]+)("[^}]*${HYBRID_VARIANT_ID})`, 'g'),
+    `$1${saleStr}$3`,
+  );
+  html = html.replace(
+    /Price:\s*"([^"]*)",\s*CompareAtPrice:\s*"([^"]*)"/g,
+    (match, price, compare) => {
+      if (!/6514|3913|649\.|6,514|3,913|8922|5360|8,922|5,360|1,000/i.test(price + compare)) return match;
+      return `Price: "${formatMoneyLikeTemplate(salePrice, price)}", CompareAtPrice: "${formatMoneyLikeTemplate(comparePrice, compare)}"`;
+    },
+  );
+  return html;
+}
+
+function patchHybridProductHtml(html) {
+  if (!html) return html;
+  const sale = HYBRID_SALE_PRICE;
+  const compare = HYBRID_COMPARE_PRICE;
+
+  const mainEnd = findHybridMainSectionEnd(html);
+  const head = html.slice(0, mainEnd);
+  const tail = html.slice(mainEnd);
+
+  let main = head;
+  main = patchSalePriceTags(main, sale);
+  main = patchComparePriceTags(main, compare);
+  main = patchAtcPriceTags(main, sale);
+  main = main.replace(/Save 40%/g, 'Save 90%');
+  main = main.replace(/"subtitle":"Save 40%"/g, '"subtitle":"Save 90%"');
+
+  html = main + tail;
+  html = patchHybridProductJson(html, sale, compare);
+  return html;
+}
+
+function patchAdvertorialDiscount(html) {
+  return html
+    .replace(/GET UP TO 70%/gi, 'GET UP TO 90%')
+    .replace(/UP TO 70% OFF/gi, 'UP TO 90% OFF')
+    .replace(/UP TO 70% DISCOUNT/gi, 'UP TO 90% DISCOUNT')
+    .replace(/\b70% OFF\b/gi, '90% OFF');
+}
+
 function patchAdvertorialHtml(html) {
   if (!html) return html;
   html = html.replace(/https?:\/\/get-titancore\.com\/products\/native/gi, LAN_PRODUCT_PATH);
   html = html.replace(/https?:\/\/get-titancore\.com\/product\b/gi, LAN_PRODUCT_PATH);
   html = html.replace(FUNNELISH_LAN_HERO_RE, LAN_HERO_IMAGE);
+  html = patchAdvertorialDiscount(html);
   return html;
 }
 
@@ -336,6 +469,9 @@ export function createTitancoreProxy() {
               if (/^\/tpmn(?:\/|$)/i.test(pathOnly(reqPath))) {
                 html = patchAdvertorialHtml(html);
               }
+              if (pathOnly(reqPath) === pathOnly(LAN_PRODUCT_PATH)) {
+                html = patchHybridProductHtml(html);
+              }
             }
             body = Buffer.from(html, 'utf8');
             delete headers['content-encoding'];
@@ -385,5 +521,8 @@ export {
   rewriteLocation,
   patchStorefrontHtml,
   patchAdvertorialHtml,
+  patchHybridProductHtml,
+  patchAdvertorialDiscount,
+  formatMoneyLikeTemplate,
   rewriteStaticHtmlUrls,
 };

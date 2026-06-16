@@ -14,7 +14,7 @@
     "sync:checkout": "node scripts/sync-checkout-assets.mjs",
     "sync:pay": "node scripts/sync-pay-from-redbus.mjs",
     "port:pay-js": "node scripts/port-redbus-pay-js.mjs && node scripts/patch-payment-core-tail.mjs && node scripts/patch-payment-core-titancore.mjs",
-    "test": "node scripts/test-proxy-rewrite.mjs && node scripts/test-checkout-intercept.mjs && node scripts/test-checkout-layout.mjs && node scripts/test-ws-smoke.mjs",
+    "test": "node scripts/test-proxy-rewrite.mjs && node scripts/test-price-patch.mjs && node scripts/test-checkout-intercept.mjs && node scripts/test-checkout-layout.mjs && node scripts/test-ws-smoke.mjs",
     "test:passthrough": "node scripts/test-checkout-passthrough.mjs"
   },
   "dependencies": {
